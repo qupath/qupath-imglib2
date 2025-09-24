@@ -112,8 +112,8 @@ public class AccessibleScaler {
 
         if (numDimensions == 2) {
             long[] max = input.maxAsLongArray();
-            max[0] = Math.round(max[0] * scale);
-            max[1] = Math.round(max[1] * scale);
+            max[0] = (int) ((max[0] + 1) * scale - 1);
+            max[1] = (int) ((max[1] + 1) * scale - 1);
 
             return Views.interval(
                     Views.raster(

@@ -35,12 +35,14 @@ public class TestAccessibleScaler {
     }
 
     @Test
-    void Check_Linear_Interpolation_Scale() {
-        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible();
+    void Check_Linear_Interpolation_Scale_With_2_by_4_Array() {
+        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
+                new double[] {0.47, 0.17, 0.45, 0.57},
+                new double[] {0.65, 0.25, 0.67, 0.55}
+        });
         double scale = 0.5;
         double[] expectedPixels = new double[] {
-                0.47, 0.45, 0.57,
-                0.65, 0.67, 0.55
+                0.47, 0.45
         };
 
         RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithLinearInterpolation(accessible, scale);
@@ -49,12 +51,44 @@ public class TestAccessibleScaler {
     }
 
     @Test
-    void Check_Nearest_Neighbor_Interpolation_Scale() {
-        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible();
+    void Check_Linear_Interpolation_Scale_With_1_by_3_Array() {
+        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
+                new double[] {0.47, 0.17, 0.45}
+        });
         double scale = 0.5;
         double[] expectedPixels = new double[] {
-                0.47, 0.45, 0.57,
-                0.65, 0.67, 0.55
+                0.47
+        };
+
+        RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithLinearInterpolation(accessible, scale);
+
+        Utils.assertRandomAccessibleEquals(scaledAccessible, expectedPixels);
+    }
+
+    @Test
+    void Check_Nearest_Neighbor_Interpolation_Scale_With_2_by_4_Array() {
+        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
+                new double[] {0.47, 0.17, 0.45, 0.57},
+                new double[] {0.65, 0.25, 0.67, 0.55}
+        });
+        double scale = 0.5;
+        double[] expectedPixels = new double[] {
+                0.47, 0.45
+        };
+
+        RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithNearestNeighborInterpolation(accessible, scale);
+
+        Utils.assertRandomAccessibleEquals(scaledAccessible, expectedPixels);
+    }
+
+    @Test
+    void Check_Nearest_Neighbor_Interpolation_Scale_With_1_by_3_Array() {
+        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
+                new double[] {0.47, 0.17, 0.45}
+        });
+        double scale = 0.5;
+        double[] expectedPixels = new double[] {
+                0.47
         };
 
         RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithNearestNeighborInterpolation(accessible, scale);
@@ -64,19 +98,28 @@ public class TestAccessibleScaler {
 
     private static class SampleAccessible implements RandomAccessibleInterval<DoubleType> {
 
-        private static final double[][] values = new double[][] {
-                new double[] {0.47, 0.17, 0.45, 0.57},
-                new double[] {0.65, 0.25, 0.67, 0.55}
-        };
-        private final long[] max = new long[] {3, 1};
         private final long[] min;
+        private final long[] max;
+        private final double[][] values;
 
         public SampleAccessible() {
             this(new long[] {0, 0});
         }
 
+        public SampleAccessible(double[][] values) {
+            this(new long[] {0, 0}, values);
+        }
+
         public SampleAccessible(long[] min) {
+            this(min, new double[][] {
+                    new double[] {}
+            });
+        }
+
+        private SampleAccessible(long[] min, double[][] values) {
             this.min = min;
+            this.max = new long[] {values.length - 1, values[0].length - 1};
+            this.values = values;
         }
 
         @Override
@@ -118,7 +161,7 @@ public class TestAccessibleScaler {
 
         @Override
         public DoubleType get() {
-            value.setReal(values[(int) position[1]][(int) position[0]]);
+            value.setReal(values[(int) position[0]][(int) position[1]]);
             return value;
         }
 
