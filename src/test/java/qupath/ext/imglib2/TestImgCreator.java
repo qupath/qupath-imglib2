@@ -37,6 +37,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestImgCreator {
 
@@ -276,7 +277,9 @@ public class TestImgCreator {
 
     private static class GenericImageServer extends AbstractImageServer<BufferedImage> {
 
+        private static final AtomicInteger counter = new AtomicInteger(0);
         private final ImageServerMetadata metadata;
+        private final String id;
 
         public GenericImageServer(boolean isRgb, PixelType pixelType) {
             super(BufferedImage.class);
@@ -288,6 +291,9 @@ public class TestImgCreator {
                     .rgb(isRgb)
                     .pixelType(pixelType)
                     .build();
+
+            // Each test uses the same cache, so each created server must have different IDs
+            this.id = String.format("Generic server %d", counter.incrementAndGet());
         }
 
         @Override
@@ -297,7 +303,7 @@ public class TestImgCreator {
 
         @Override
         protected String createID() {
-            return "";
+            return id;
         }
 
         @Override
@@ -421,9 +427,14 @@ public class TestImgCreator {
                 ))
                 .levelsFromDownsamples(1, 4)
                 .build();
+        private static final AtomicInteger counter = new AtomicInteger(0);
+        private final String id;
 
         public ComplexDoubleImageServer() {
             super(BufferedImage.class);
+
+            // Each test uses the same cache, so each created server must have different IDs
+            this.id = String.format("Complex double server %d", counter.incrementAndGet());
         }
 
         @Override
@@ -433,7 +444,7 @@ public class TestImgCreator {
 
         @Override
         protected String createID() {
-            return getClass().getName();
+            return id;
         }
 
         @Override

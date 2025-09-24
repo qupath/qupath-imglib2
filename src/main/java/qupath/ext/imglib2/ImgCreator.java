@@ -1,7 +1,5 @@
 package qupath.ext.imglib2;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
@@ -45,8 +43,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 /**
@@ -67,19 +64,16 @@ import java.util.stream.IntStream;
  */
 public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends ArrayDataAccess<A>> {
 
-    private final Map<Integer, LoadingCache<Long, Cell<A>>> caches = new ConcurrentHashMap<>();
     private final ImageServer<BufferedImage> server;
     private final T type;
-    private final int cacheSizeMiB;
+    private final CellCache cellCache;
     private final int numberOfChannels;
-    private final float inputTypeSizeMiB;
 
     private ImgCreator(Builder<T> builder) {
         this.server = builder.server;
         this.type = builder.type;
-        this.cacheSizeMiB = builder.cacheSizeMiB;
+        this.cellCache = builder.cellCache;
         this.numberOfChannels = server.isRGB() ? 1 : server.nChannels();
-        this.inputTypeSizeMiB = getInputTypeSizeBits(server) / 8f / (1024f * 1024f);
     }
 
     /**
@@ -118,14 +112,6 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
         }
 
         List<TileRequest> tiles = new ArrayList<>(server.getTileRequestManager().getTileRequestsForLevel(level));
-        LoadingCache<Long, Cell<A>> cache = caches.computeIfAbsent(
-                level,
-                l -> Caffeine.newBuilder()
-                        .weigher((Long index, Cell<A> cell) -> (int) (cell.getData().getArrayLength() * inputTypeSizeMiB))
-                        .maximumWeight(cacheSizeMiB)
-                        .softValues()
-                        .build(i -> getCell(tiles.get(Math.toIntExact(i))))
-        );
 
         return new LazyCellImg<>(
                 new CellGrid(
@@ -145,7 +131,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
                         }
                 ),
                 type,
-                cache::get
+                cellIndex -> cellCache.getCell(tiles.get(Math.toIntExact(cellIndex)), this::getCell)
         );
     }
 
@@ -184,9 +170,10 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
      */
     public static class Builder<T extends NativeType<T> & NumericType<T>> {
 
+        private static final CellCache defaultCellCache = new CellCache((int) (Runtime.getRuntime().maxMemory() * 0.5 / (1024 * 1024)));
         private final ImageServer<BufferedImage> server;
         private final T type;
-        private int cacheSizeMiB = (int) (Runtime.getRuntime().maxMemory() * 0.5 / (1024 * 1024));
+        private CellCache cellCache = defaultCellCache;
 
         /**
          * Create a builder from an {@link ImageServer}.
@@ -263,16 +250,14 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
 
         /**
          * Accessibles returned by this class will be divided into cells, which will be cached to gain performance. This function sets the
-         * maximal size of the cache in mebibyte (MiB). By default, half the amount of the {@link Runtime#maxMemory() max memory} is used.
-         * <p>
-         * Note that the actual size of the cache also depends on the current available memory. The cache will take up to the specified
-         * space only there is enough available memory.
+         * cache to use. By default, a static cache of maximal size half the amount of the {@link Runtime#maxMemory() max memory} is used.
          *
-         * @param cacheSizeMiB the maximal size of the cache in MiB
+         * @param cellCache the cache to use
          * @return this builder
+         * @throws NullPointerException if the provided cache is null
          */
-        public Builder<T> cacheSizeMiB(int cacheSizeMiB) {
-            this.cacheSizeMiB = cacheSizeMiB;
+        public Builder<T> cellCache(CellCache cellCache) {
+            this.cellCache = Objects.requireNonNull(cellCache);
             return this;
         }
 
@@ -379,20 +364,6 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
                     }
                 }
             }
-        }
-    }
-
-    private static int getInputTypeSizeBits(ImageServer<?> server) {
-        if (server.isRGB()) {
-            return Integer.SIZE;
-        } else {
-            return switch (server.getPixelType()) {
-                case UINT8, INT8 -> Byte.SIZE;
-                case UINT16, INT16 -> Short.SIZE;
-                case UINT32, INT32 -> Integer.SIZE;
-                case FLOAT32 -> Float.SIZE;
-                case FLOAT64 -> Double.SIZE;
-            };
         }
     }
 
