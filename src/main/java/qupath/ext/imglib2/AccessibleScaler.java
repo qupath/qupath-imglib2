@@ -112,6 +112,7 @@ public class AccessibleScaler {
 
         if (numDimensions == 2) {
             long[] max = input.maxAsLongArray();
+            // Get number of elements (+1), apply the scale (*scale), and then get inclusive max (-1)
             max[0] = (int) ((max[0] + 1) * scale - 1);
             max[1] = (int) ((max[1] + 1) * scale - 1);
 

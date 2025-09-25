@@ -56,6 +56,8 @@ public class Utils {
     }
 
     public static <T extends RealType<T>> void assertRandomAccessibleEquals(RandomAccessibleInterval<T> accessible, double[] expectedPixels) {
+        Assertions.assertEquals(expectedPixels.length, accessible.size());
+
         int[] position = new int[accessible.numDimensions()];
         int width = Math.toIntExact(accessible.dimension(ImgCreator.getIndexOfDimension(Dimension.X)));
         Cursor<T> cursor = accessible.localizingCursor();
