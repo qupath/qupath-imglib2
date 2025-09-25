@@ -5,8 +5,10 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.interpolation.InterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
+import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.RealViews;
 import net.imglib2.realtransform.Scale2D;
+import net.imglib2.realtransform.Translation2D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
@@ -18,6 +20,9 @@ import java.util.stream.LongStream;
  * A collection of static functions to scale {@link RandomAccessibleInterval}.
  */
 public class AccessibleScaler {
+
+    private static final AffineGet CENTER_TRANSLATION = new Translation2D(0.5, 0.5);
+    private static final AffineGet TOP_LEFT_TRANSLATION = new Translation2D(-0.5, -0.5);
 
     private AccessibleScaler() {
         throw new AssertionError("This class is not instantiable.");
@@ -95,13 +100,14 @@ public class AccessibleScaler {
         if (scale == 1) {
             return input;
         } else {
-            return scaleWithoutChecks(input, scale, interpolatorFactory);
+            return scaleWithoutChecks(input, scale, new Scale2D(scale, scale), interpolatorFactory);
         }
     }
 
     private static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T> scaleWithoutChecks(
             RandomAccessibleInterval<T> input,
             double scale,
+            Scale2D scale2D,
             InterpolatorFactory<T, RandomAccessible<T>> interpolatorFactory
     ) {
         // Directly applying the scale on a multidimensional image involves too many useless computation
@@ -118,12 +124,19 @@ public class AccessibleScaler {
 
             return Views.interval(
                     Views.raster(
+                            // Get center of pixel (+0.5), apply scale (*scale), get top left corner of pixel (-0.5)
                             RealViews.affine(
-                                    Views.interpolate(
-                                            Views.extendMirrorDouble(input),
-                                            interpolatorFactory
+                                    RealViews.affine(
+                                            RealViews.affine(
+                                                    Views.interpolate(
+                                                            Views.extendMirrorDouble(input),
+                                                            interpolatorFactory
+                                                    ),
+                                                    CENTER_TRANSLATION
+                                            ),
+                                            scale2D
                                     ),
-                                    new Scale2D(scale, scale)
+                                    TOP_LEFT_TRANSLATION
                             )
                     ),
                     new long[] {0, 0},

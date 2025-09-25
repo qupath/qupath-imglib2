@@ -37,12 +37,12 @@ public class TestAccessibleScaler {
     @Test
     void Check_Linear_Interpolation_Scale_With_2_by_4_Array() {
         RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
-                new double[] {0.47, 0.17, 0.45, 0.57},
-                new double[] {0.65, 0.25, 0.67, 0.55}
+                new double[] {0.80, 0.97, 0.40, 0.99},
+                new double[] {0.95, 0.22, 0.63, 0.25}
         });
         double scale = 0.5;
-        double[] expectedPixels = new double[] {
-                0.47, 0.45
+        double[][] expectedPixels = new double[][] {
+                new double[] {0.735, 0.5675}
         };
 
         RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithLinearInterpolation(accessible, scale);
@@ -53,11 +53,31 @@ public class TestAccessibleScaler {
     @Test
     void Check_Linear_Interpolation_Scale_With_1_by_3_Array() {
         RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
-                new double[] {0.47, 0.17, 0.45}
+                new double[] {0.26, 0.66, 0.34}
         });
         double scale = 0.5;
-        double[] expectedPixels = new double[] {
-                0.47
+        double[][] expectedPixels = new double[][] {
+                new double[] {0.46}
+        };
+
+        RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithLinearInterpolation(accessible, scale);
+
+        Utils.assertRandomAccessibleEquals(scaledAccessible, expectedPixels);
+    }
+
+    @Test
+    void Check_Linear_Interpolation_Interpolation_Scale_With_5_by_5_Array() {
+        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
+                new double[] {0.80, 0.72, 0.48, 0.27, 0.68},
+                new double[] {0.41, 0.21, 0.60, 0.47, 0.86},
+                new double[] {0.94, 0.32, 0.55, 0.22, 0.46},
+                new double[] {0.43, 0.83, 0.49, 0.67, 0.42},
+                new double[] {0.49, 0.75, 0.85, 0.46, 0.89},
+        });
+        double scale = 0.5;
+        double[][] expectedPixels = new double[][] {
+                new double[] {0.535, 0.455},
+                new double[] {0.63, 0.4825}
         };
 
         RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithLinearInterpolation(accessible, scale);
@@ -68,12 +88,12 @@ public class TestAccessibleScaler {
     @Test
     void Check_Nearest_Neighbor_Interpolation_Scale_With_2_by_4_Array() {
         RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
-                new double[] {0.47, 0.17, 0.45, 0.57},
-                new double[] {0.65, 0.25, 0.67, 0.55}
+                new double[] {0.80, 0.97, 0.40, 0.99},
+                new double[] {0.95, 0.22, 0.63, 0.25}
         });
         double scale = 0.5;
-        double[] expectedPixels = new double[] {
-                0.47, 0.45
+        double[][] expectedPixels = new double[][] {
+                new double[] {0.22, 0.25}
         };
 
         RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithNearestNeighborInterpolation(accessible, scale);
@@ -84,11 +104,31 @@ public class TestAccessibleScaler {
     @Test
     void Check_Nearest_Neighbor_Interpolation_Scale_With_1_by_3_Array() {
         RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
-                new double[] {0.47, 0.17, 0.45}
+                new double[] {0.26, 0.66, 0.34}
         });
         double scale = 0.5;
-        double[] expectedPixels = new double[] {
-                0.47
+        double[][] expectedPixels = new double[][] {
+                new double[] {0.66}
+        };
+
+        RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithNearestNeighborInterpolation(accessible, scale);
+
+        Utils.assertRandomAccessibleEquals(scaledAccessible, expectedPixels);
+    }
+
+    @Test
+    void Check_Nearest_Neighbor_Interpolation_Scale_With_5_by_5_Array() {
+        RandomAccessibleInterval<DoubleType> accessible = new SampleAccessible(new double[][] {
+                new double[] {0.80, 0.72, 0.48, 0.27, 0.68},
+                new double[] {0.41, 0.21, 0.60, 0.47, 0.86},
+                new double[] {0.94, 0.32, 0.55, 0.22, 0.46},
+                new double[] {0.43, 0.83, 0.49, 0.67, 0.42},
+                new double[] {0.49, 0.75, 0.85, 0.46, 0.89},
+        });
+        double scale = 0.5;
+        double[][] expectedPixels = new double[][] {
+                new double[] {0.21, 0.47},
+                new double[] {0.83, 0.67}
         };
 
         RandomAccessibleInterval<DoubleType> scaledAccessible = AccessibleScaler.scaleWithNearestNeighborInterpolation(accessible, scale);

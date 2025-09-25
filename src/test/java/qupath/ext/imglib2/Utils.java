@@ -55,22 +55,23 @@ public class Utils {
         }
     }
 
-    public static <T extends RealType<T>> void assertRandomAccessibleEquals(RandomAccessibleInterval<T> accessible, double[] expectedPixels) {
-        Assertions.assertEquals(expectedPixels.length, accessible.size());
+    public static <T extends RealType<T>> void assertRandomAccessibleEquals(RandomAccessibleInterval<T> accessible, double[][] expectedPixels) {
+        Assertions.assertEquals(expectedPixels.length, accessible.dimension(0));
+        Assertions.assertEquals(expectedPixels[0].length, accessible.dimension(1));
 
         int[] position = new int[accessible.numDimensions()];
-        int width = Math.toIntExact(accessible.dimension(ImgCreator.getIndexOfDimension(Dimension.X)));
         Cursor<T> cursor = accessible.localizingCursor();
 
         while (cursor.hasNext()) {
             T pixel = cursor.next();
             cursor.localize(position);
-            int x = position[ImgCreator.getIndexOfDimension(Dimension.X)];
-            int y = position[ImgCreator.getIndexOfDimension(Dimension.Y)];
+            int x = position[1];
+            int y = position[0];
 
             Assertions.assertEquals(
-                    expectedPixels[x + width * y],
-                    pixel.getRealDouble()
+                    expectedPixels[y][x],
+                    pixel.getRealDouble(),
+                    0.0000000001        // to avoid rounding errors
             );
         }
     }
