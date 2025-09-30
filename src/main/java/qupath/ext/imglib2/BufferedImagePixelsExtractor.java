@@ -40,7 +40,7 @@ public class BufferedImagePixelsExtractor {
      * @return an immutable integer array containing (A)RGB pixels of the provided image. The integer representation of an (A)RGB
      * pixel located at coordinates [x;y] is located at index [x + imageWidth * y] of the returned array
      */
-    public static ImmutableIntArray getARGB(BufferedImage image) {
+    public static ImmutableIntArray getArgb(BufferedImage image) {
         int[] array;
 
         // Avoid calling img.getRGB() if possible, as this call makes a copy of the pixels

@@ -254,7 +254,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
          */
         public ImgCreator<T, ?> build() {
             if (server.isRGB()) {
-                return new ImgCreator<>(this, BufferedImagePixelsExtractor::getARGB);
+                return new ImgCreator<>(this, BufferedImagePixelsExtractor::getArgb);
             } else {
                 return switch (server.getPixelType()) {
                     case UINT8, INT8 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getBytes(image.getRaster()));
