@@ -46,9 +46,9 @@ println safeImg
 var randomAccess = randomAccessible.randomAccess()
 
 var position = new long[Dimension.values().length]
-position[ImgCreator.getIndexOfDimension(Dimension.X)] = 1;
-position[ImgCreator.getIndexOfDimension(Dimension.Y)] = 2;
+position[ImgCreator.getIndexOfDimension(Dimension.X)] = 1
+position[ImgCreator.getIndexOfDimension(Dimension.Y)] = 2
 
-var pixel = randomAccess.setPositionAndGet(position);
+var pixel = randomAccess.setPositionAndGet(position)
 println pixel
 ```
