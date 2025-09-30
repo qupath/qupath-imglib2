@@ -17,34 +17,18 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import qupath.ext.imglib2.immutablearrays.ImmutableByteArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableDoubleArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableFloatArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableIntArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableShortArray;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.ServerTools;
 import qupath.lib.images.servers.TileRequest;
 import qupath.lib.images.servers.PixelType;
 
-import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferDouble;
-import java.awt.image.DataBufferFloat;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DataBufferShort;
-import java.awt.image.DataBufferUShort;
-import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.SinglePixelPackedSampleModel;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.IntStream;
+import java.util.function.Function;
 
 /**
  * A class to create {@link Img} or {@link RandomAccessibleInterval} from an {@link ImageServer}.
@@ -67,12 +51,14 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
     private final ImageServer<BufferedImage> server;
     private final T type;
     private final CellCache cellCache;
+    private final Function<BufferedImage, A> cellCreator;
     private final int numberOfChannels;
 
-    private ImgCreator(Builder<T> builder) {
+    private ImgCreator(Builder<T> builder, Function<BufferedImage, A> cellCreator) {
         this.server = builder.server;
         this.type = builder.type;
         this.cellCache = builder.cellCache;
+        this.cellCreator = cellCreator;
         this.numberOfChannels = server.isRGB() ? 1 : server.nChannels();
     }
 
@@ -131,7 +117,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
                         }
                 ),
                 type,
-                cellIndex -> cellCache.getCell(tiles.get(Math.toIntExact(cellIndex)), this::getCell)
+                cellIndex -> cellCache.getCell(tiles.get(Math.toIntExact(cellIndex)), this::createCell)
         );
     }
 
@@ -267,7 +253,17 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
          * @return a new instance of {@link ImgCreator}
          */
         public ImgCreator<T, ?> build() {
-            return new ImgCreator<>(this);
+            if (server.isRGB()) {
+                return new ImgCreator<>(this, BufferedImagePixelsExtractor::getARGB);
+            } else {
+                return switch (server.getPixelType()) {
+                    case UINT8, INT8 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getBytes(image.getRaster()));
+                    case UINT16, INT16 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getShorts(image.getRaster()));
+                    case UINT32, INT32 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getIntegers(image.getRaster()));
+                    case FLOAT32 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getFloats(image.getRaster()));
+                    case FLOAT64 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getDoubles(image.getRaster()));
+                };
+            }
         }
 
         @SuppressWarnings("unchecked")
@@ -367,7 +363,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
         }
     }
 
-    private Cell<A> getCell(TileRequest tile) {
+    private Cell<A> createCell(TileRequest tile) {
         BufferedImage image;
         try {
             image = server.readRegion(tile.getRegionRequest());
@@ -375,217 +371,10 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
             throw new RuntimeException(e);
         }
 
-        A data;
-        if (server.isRGB()) {
-            data = getARGB(image);
-        } else {
-            data = switch (server.getPixelType()) {
-                case UINT8, INT8 -> getBytes(image.getRaster());
-                case UINT16, INT16 -> getShorts(image.getRaster());
-                case UINT32, INT32 -> getIntegers(image.getRaster());
-                case FLOAT32 -> getFloats(image.getRaster());
-                case FLOAT64 -> getDoubles(image.getRaster());
-            };
-        }
-
         return new Cell<>(
                 new int[]{ image.getWidth(), image.getHeight(), numberOfChannels, 1, 1 },
                 new long[]{ tile.getTileX(), tile.getTileY(), 0, tile.getZ(), tile.getT()},
-                data
+                cellCreator.apply(image)
         );
-    }
-
-    @SuppressWarnings("unchecked")
-    private A getARGB(BufferedImage img) {
-        int[] array;
-
-        // Avoid calling img.getRGB() if possible, as this call makes a copy of the pixels
-        if (img.getRaster().getDataBuffer() instanceof DataBufferInt dataBufferInt && img.getRaster().getSampleModel() instanceof SinglePixelPackedSampleModel) {
-            array = dataBufferInt.getBankData()[0];    // SinglePixelPackedSampleModel contains all data array elements in the first bank of the DataBuffer
-        } else {
-            array = img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
-        }
-
-        return (A) new ImmutableIntArray(array);
-    }
-
-    @SuppressWarnings("unchecked")
-    private A getBytes(Raster raster) {
-        int planeSize = getPlaneSize(raster);
-        int nBands = raster.getNumBands();
-        byte[] array;
-
-        // Avoid calling raster.getSamples() if possible, as this call makes a copy of the pixels
-        if (raster.getDataBuffer() instanceof DataBufferByte dataBufferByte && isSampleModelDirectlyUsable(raster.getSampleModel(), nBands)) {
-            byte[][] pixels = dataBufferByte.getBankData();
-
-            // If there's only one channel, no copy is necessary
-            if (pixels.length == 1) {
-                array = pixels[0];
-            } else {
-                array = new byte[planeSize * nBands];
-
-                for (int bank=0; bank<nBands; bank++) {
-                    System.arraycopy(pixels[bank], 0, array, bank * planeSize, planeSize);
-                }
-            }
-        } else {
-            array = new byte[planeSize * nBands];
-            int[] source = null;
-            int ind = 0;
-            for (int band = 0; band < nBands; band++) {
-                source = raster.getSamples(0, 0, raster.getWidth(), raster.getHeight(), band, source);
-                for (int val : source) {
-                    array[ind++] = (byte) val;
-                }
-            }
-        }
-
-        return (A) new ImmutableByteArray(array);
-    }
-
-    @SuppressWarnings("unchecked")
-    private A getShorts(Raster raster) {
-        int planeSize = getPlaneSize(raster);
-        int nBands = raster.getNumBands();
-        short[] array;
-
-        // See getBytes() for an explanation of the optimizations
-        if (
-                (raster.getDataBuffer() instanceof DataBufferShort || raster.getDataBuffer() instanceof DataBufferUShort) &&
-                        isSampleModelDirectlyUsable(raster.getSampleModel(), nBands)
-        ) {
-            short[][] pixels;
-            if (raster.getDataBuffer() instanceof DataBufferShort dataBufferShort) {
-                pixels = dataBufferShort.getBankData();
-            } else {
-                pixels = ((DataBufferUShort) raster.getDataBuffer()).getBankData();
-            }
-
-            if (pixels.length == 1) {
-                array = pixels[0];
-            } else {
-                array = new short[planeSize * nBands];
-
-                for (int bank=0; bank<nBands; bank++) {
-                    System.arraycopy(pixels[bank], 0, array, bank * planeSize, planeSize);
-                }
-            }
-        } else {
-            array = new short[planeSize * nBands];
-            int[] source = null;
-            int ind = 0;
-            for (int band = 0; band < nBands; band++) {
-                source = raster.getSamples(0, 0, raster.getWidth(), raster.getHeight(), band, source);
-                for (int val : source) {
-                    array[ind++] = (short) val;
-                }
-            }
-        }
-
-        return (A) new ImmutableShortArray(array);
-    }
-
-    @SuppressWarnings("unchecked")
-    private A getIntegers(Raster raster) {
-        int planeSize = getPlaneSize(raster);
-        int nBands = raster.getNumBands();
-        int[] array;
-
-        // See getBytes() for an explanation of the optimizations
-        if (raster.getDataBuffer() instanceof DataBufferInt dataBufferInt && isSampleModelDirectlyUsable(raster.getSampleModel(), nBands)) {
-            int[][] pixels = dataBufferInt.getBankData();
-
-            if (pixels.length == 1) {
-                array = pixels[0];
-            } else {
-                array = new int[planeSize * nBands];
-
-                for (int bank=0; bank<nBands; bank++) {
-                    System.arraycopy(pixels[bank], 0, array, bank * planeSize, planeSize);
-                }
-            }
-        } else {
-            array = new int[planeSize * nBands];
-            int[] source = null;
-            for (int band = 0; band < nBands; band++) {
-                source = raster.getSamples(0, 0, raster.getWidth(), raster.getHeight(), band, source);
-                System.arraycopy(source, 0, array, band * planeSize, planeSize);
-            }
-        }
-
-        return (A) new ImmutableIntArray(array);
-    }
-
-    @SuppressWarnings("unchecked")
-    private A getFloats(Raster raster) {
-        int planeSize = getPlaneSize(raster);
-        int nBands = raster.getNumBands();
-        float[] array;
-
-        // See getBytes() for an explanation of the optimizations
-        if (raster.getDataBuffer() instanceof DataBufferFloat dataBufferFloat && isSampleModelDirectlyUsable(raster.getSampleModel(), nBands)) {
-            float[][] pixels = dataBufferFloat.getBankData();
-
-            if (pixels.length == 1) {
-                array = pixels[0];
-            } else {
-                array = new float[planeSize * nBands];
-
-                for (int bank=0; bank<nBands; bank++) {
-                    System.arraycopy(pixels[bank], 0, array, bank * planeSize, planeSize);
-                }
-            }
-        } else {
-            array = new float[planeSize * nBands];
-            float[] source = null;
-            for (int band = 0; band < nBands; band++) {
-                source = raster.getSamples(0, 0, raster.getWidth(), raster.getHeight(), band, source);
-                System.arraycopy(source, 0, array, band * planeSize, planeSize);
-            }
-        }
-
-        return (A) new ImmutableFloatArray(array);
-    }
-
-    @SuppressWarnings("unchecked")
-    private A getDoubles(Raster raster) {
-        int planeSize = getPlaneSize(raster);
-        int nBands = raster.getNumBands();
-        double[] array;
-
-        // See getBytes() for an explanation of the optimizations
-        if (raster.getDataBuffer() instanceof DataBufferDouble dataBufferDouble && isSampleModelDirectlyUsable(raster.getSampleModel(), nBands)) {
-            double[][] pixels = dataBufferDouble.getBankData();
-
-            if (pixels.length == 1) {
-                array = pixels[0];
-            } else {
-                array = new double[planeSize * nBands];
-
-                for (int bank=0; bank<nBands; bank++) {
-                    System.arraycopy(pixels[bank], 0, array, bank * planeSize, planeSize);
-                }
-            }
-        } else {
-            array = new double[planeSize * nBands];
-            double[] source = null;
-            for (int band = 0; band < nBands; band++) {
-                source = raster.getSamples(0, 0, raster.getWidth(), raster.getHeight(), band, source);
-                System.arraycopy(source, 0, array, band * planeSize, planeSize);
-            }
-        }
-
-        return (A) new ImmutableDoubleArray(array);
-    }
-
-    private static int getPlaneSize(Raster raster) {
-        return raster.getWidth() * raster.getHeight();
-    }
-
-    private static boolean isSampleModelDirectlyUsable(SampleModel sampleModel, int nBands) {
-        return sampleModel instanceof BandedSampleModel bandedSampleModel &&
-                Arrays.stream(bandedSampleModel.getBandOffsets()).allMatch(offset -> offset == 0) &&
-                Arrays.equals(bandedSampleModel.getBankIndices(), IntStream.range(0, nBands).toArray());
     }
 }
