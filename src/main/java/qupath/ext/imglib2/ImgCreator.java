@@ -39,7 +39,7 @@ import java.util.function.Function;
  * Warning: each accessible returned by this class is immutable. This means that any attempt to write data to them will either result in an
  * {@link UnsupportedOperationException} or be ignored.
  * <p>
- * Use a {@link Builder} to create an instance of this class.
+ * Use a {@link #builder(ImageServer)} or {@link #builder(ImageServer, NativeType)} to create an instance of this class.
  * <p>
  * This class is thread-safe.
  *
@@ -60,6 +60,73 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
         this.cellCache = builder.cellCache;
         this.cellCreator = cellCreator;
         this.numberOfChannels = server.isRGB() ? 1 : server.nChannels();
+    }
+
+    /**
+     * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
+     * <p>
+     * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
+     * returned accessibles of this class. It is recommended to use {@link #builder(ImageServer, NativeType)} instead.
+     *
+     * @param server the input image
+     * @throws IllegalArgumentException if the provided image has less than one channel
+     */
+    public static Builder<?> builder(ImageServer<BufferedImage> server) {
+        return new Builder<>(server);
+    }
+
+    /**
+     * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
+     * <p>
+     * The provided type must be compatible with the input image:
+     * <ul>
+     *     <li>If the input image is {@link ImageServer#isRGB() RGB}, the type must be {@link ARGBType}.</li>
+     *     <li>
+     *         Else:
+     *         <ul>
+     *             <li>
+     *                 If the input image has the {@link PixelType#UINT8} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link UnsignedByteType}.
+     *             </li>
+     *             <li>
+     *                 If the input image has the {@link PixelType#INT8} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link ByteType}.
+     *             </li>
+     *             <li>
+     *                 If the input image has the {@link PixelType#UINT16} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link UnsignedShortType}.
+     *             </li>
+     *             <li>
+     *                 If the input image has the {@link PixelType#INT16} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link ShortType}.
+     *             </li>
+     *             <li>
+     *                 If the input image has the {@link PixelType#UINT32} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link UnsignedIntType}.
+     *             </li>
+     *             <li>
+     *                 If the input image has the {@link PixelType#INT32} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link IntType}.
+     *             </li>
+     *             <li>
+     *                 If the input image has the {@link PixelType#FLOAT32} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link FloatType}.
+     *             </li>
+     *             <li>
+     *                 If the input image has the {@link PixelType#FLOAT64} {@link ImageServer#getPixelType() pixel type},
+     *                 the type must be {@link DoubleType}.
+     *             </li>
+     *         </ul>
+     *     </li>
+     * </ul>
+     *
+     * @param server the input image
+     * @param type the expected type of the output image
+     * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if the provided image
+     * has less than one channel
+     */
+    public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server, T type) {
+        return new Builder<>(server, type);
     }
 
     /**
@@ -161,70 +228,11 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
         private final T type;
         private CellCache cellCache = defaultCellCache;
 
-        /**
-         * Create a builder from an {@link ImageServer}.
-         * <p>
-         * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
-         * returned accessibles of this class. It is recommended to use {@link #Builder(ImageServer, NativeType)} instead.
-         *
-         * @param server the input image
-         * @throws IllegalArgumentException if the provided image has less than one channel
-         */
-        public Builder(ImageServer<BufferedImage> server) {
+        private Builder(ImageServer<BufferedImage> server) {
             this(server, getTypeOfServer(server));
         }
 
-        /**
-         * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
-         * <p>
-         * The provided type must be compatible with the input image:
-         * <ul>
-         *     <li>If the input image is {@link ImageServer#isRGB() RGB}, the type must be {@link ARGBType}.</li>
-         *     <li>
-         *         Else:
-         *         <ul>
-         *             <li>
-         *                 If the input image has the {@link PixelType#UINT8} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link UnsignedByteType}.
-         *             </li>
-         *             <li>
-         *                 If the input image has the {@link PixelType#INT8} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link ByteType}.
-         *             </li>
-         *             <li>
-         *                 If the input image has the {@link PixelType#UINT16} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link UnsignedShortType}.
-         *             </li>
-         *             <li>
-         *                 If the input image has the {@link PixelType#INT16} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link ShortType}.
-         *             </li>
-         *             <li>
-         *                 If the input image has the {@link PixelType#UINT32} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link UnsignedIntType}.
-         *             </li>
-         *             <li>
-         *                 If the input image has the {@link PixelType#INT32} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link IntType}.
-         *             </li>
-         *             <li>
-         *                 If the input image has the {@link PixelType#FLOAT32} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link FloatType}.
-         *             </li>
-         *             <li>
-         *                 If the input image has the {@link PixelType#FLOAT64} {@link ImageServer#getPixelType() pixel type},
-         *                 the type must be {@link DoubleType}.
-         *             </li>
-         *         </ul>
-         *     </li>
-         * </ul>
-         *
-         * @param server the input image
-         * @param type the expected type of the output image
-         * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if the provided image
-         * has less than one channel
-         */
-        public Builder(ImageServer<BufferedImage> server, T type) {
+        private Builder(ImageServer<BufferedImage> server, T type) {
             checkType(server, type);
             if (server.nChannels() <= 0) {
                 throw new IllegalArgumentException(String.format("The provided image has less than one channel (%d)", server.nChannels()));
