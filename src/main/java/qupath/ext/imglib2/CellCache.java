@@ -3,14 +3,14 @@ package qupath.ext.imglib2;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
+import net.imglib2.img.basictypeaccess.array.ByteArray;
+import net.imglib2.img.basictypeaccess.array.DoubleArray;
+import net.imglib2.img.basictypeaccess.array.FloatArray;
+import net.imglib2.img.basictypeaccess.array.IntArray;
+import net.imglib2.img.basictypeaccess.array.ShortArray;
 import net.imglib2.img.cell.Cell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.ext.imglib2.immutablearrays.ImmutableByteArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableDoubleArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableFloatArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableIntArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableShortArray;
 import qupath.lib.images.servers.TileRequest;
 
 import java.util.function.Function;
@@ -53,15 +53,15 @@ public class CellCache {
 
     private static int weigher(TileRequest tile, Cell<? extends ArrayDataAccess<?>> cell) {
         int valueSizeBytes;
-        if (cell.getData() instanceof ImmutableByteArray) {
+        if (cell.getData() instanceof ByteArray) {
             valueSizeBytes = 1;
-        } else if (cell.getData() instanceof ImmutableShortArray) {
+        } else if (cell.getData() instanceof ShortArray) {
             valueSizeBytes = 2;
-        } else if (cell.getData() instanceof ImmutableIntArray) {
+        } else if (cell.getData() instanceof IntArray) {
             valueSizeBytes = 4;
-        } else if (cell.getData() instanceof ImmutableFloatArray) {
+        } else if (cell.getData() instanceof FloatArray) {
             valueSizeBytes = 4;
-        } else if (cell.getData() instanceof ImmutableDoubleArray) {
+        } else if (cell.getData() instanceof DoubleArray) {
             valueSizeBytes = 8;
         } else {
             logger.warn("Unexpected array {}. Considering each element of it takes 1 byte", cell.getData());
