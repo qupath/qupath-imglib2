@@ -4,6 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
 import net.imglib2.img.cell.Cell;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.ext.imglib2.immutablearrays.ImmutableByteArray;
 import qupath.ext.imglib2.immutablearrays.ImmutableDoubleArray;
 import qupath.ext.imglib2.immutablearrays.ImmutableFloatArray;
@@ -20,6 +22,7 @@ import java.util.function.Function;
  */
 public class CellCache {
 
+    private static final Logger logger = LoggerFactory.getLogger(CellCache.class);
     private final Cache<TileRequest, Cell<? extends ArrayDataAccess<?>>> cache;
 
     /**
@@ -30,24 +33,7 @@ public class CellCache {
      */
     public CellCache(int cacheMaxSizeMiB) {
         this.cache = Caffeine.newBuilder()
-                .weigher((TileRequest tile, Cell<? extends ArrayDataAccess<?>> cell) -> {
-                    int valueSizeBytes;
-                    if (cell.getData() instanceof ImmutableByteArray) {
-                        valueSizeBytes = 1;
-                    } else if (cell.getData() instanceof ImmutableShortArray) {
-                        valueSizeBytes = 2;
-                    } else if (cell.getData() instanceof ImmutableIntArray) {
-                        valueSizeBytes = 4;
-                    } else if (cell.getData() instanceof ImmutableFloatArray) {
-                        valueSizeBytes = 4;
-                    } else if (cell.getData() instanceof ImmutableDoubleArray) {
-                        valueSizeBytes = 8;
-                    } else {
-                        valueSizeBytes = 1;
-                    }
-
-                    return (int) (cell.getData().getArrayLength() * valueSizeBytes / (1024f * 1024f));
-                })
+                .weigher(CellCache::weigher)
                 .maximumWeight(cacheMaxSizeMiB)
                 .softValues()
                 .build();
@@ -63,5 +49,25 @@ public class CellCache {
      */
     public Cell<? extends ArrayDataAccess<?>> getCell(TileRequest tileRequest, Function<TileRequest, Cell<? extends ArrayDataAccess<?>>> cellGetter) {
         return cache.get(tileRequest, cellGetter);
+    }
+
+    private static int weigher(TileRequest tile, Cell<? extends ArrayDataAccess<?>> cell) {
+        int valueSizeBytes;
+        if (cell.getData() instanceof ImmutableByteArray) {
+            valueSizeBytes = 1;
+        } else if (cell.getData() instanceof ImmutableShortArray) {
+            valueSizeBytes = 2;
+        } else if (cell.getData() instanceof ImmutableIntArray) {
+            valueSizeBytes = 4;
+        } else if (cell.getData() instanceof ImmutableFloatArray) {
+            valueSizeBytes = 4;
+        } else if (cell.getData() instanceof ImmutableDoubleArray) {
+            valueSizeBytes = 8;
+        } else {
+            logger.warn("Unexpected array {}. Considering each element of it takes 1 byte", cell.getData());
+            valueSizeBytes = 1;
+        }
+
+        return (int) (cell.getData().getArrayLength() * valueSizeBytes / (1024f * 1024f));
     }
 }
