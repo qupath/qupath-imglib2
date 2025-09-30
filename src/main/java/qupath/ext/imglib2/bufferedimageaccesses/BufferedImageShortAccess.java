@@ -1,6 +1,7 @@
 package qupath.ext.imglib2.bufferedimageaccesses;
 
 import net.imglib2.img.basictypeaccess.ShortAccess;
+import qupath.ext.imglib2.SizableDataAccess;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -27,6 +28,7 @@ public class BufferedImageShortAccess implements ShortAccess, SizableDataAccess 
      * Create the buffered image access.
      *
      * @param image the image containing the values to return. Its pixels are expected to be stored in the short format
+     * @throws NullPointerException if the provided image is null
      */
     public BufferedImageShortAccess(BufferedImage image) {
         this.raster = image.getRaster();
@@ -47,11 +49,7 @@ public class BufferedImageShortAccess implements ShortAccess, SizableDataAccess 
         int xyIndex = index % planeSize;
 
         if (canUseDataBuffer) {
-            if (dataBuffer instanceof DataBufferShort dataBufferShort) {
-                return dataBufferShort.getBankData()[b][xyIndex];
-            } else {
-                return ((DataBufferUShort) dataBuffer).getBankData()[b][xyIndex];
-            }
+            return (short) dataBuffer.getElem(b, xyIndex);
         } else {
             return (short) raster.getSample(xyIndex % width, xyIndex / width, b);
         }

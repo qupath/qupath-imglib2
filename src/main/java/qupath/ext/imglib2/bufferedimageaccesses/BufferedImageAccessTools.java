@@ -28,14 +28,13 @@ class BufferedImageAccessTools {
 
     /**
      * Check whether the sample model of the provided raster stores pixels the following way: a pixel located at [x;y;b]
-     * is accessible by looking at bank b and index x + width*y of the data buffer
+     * is accessible by looking at bank b and index x + width*y + bankOffset of the data buffer
      *
      * @param raster the raster containing the sample model and the pixels
      * @return whether the sample model of the provided raster stores pixels in the way described above
      */
     public static boolean isSampleModelDirectlyUsable(Raster raster) {
         return raster.getSampleModel() instanceof BandedSampleModel bandedSampleModel &&
-                Arrays.stream(bandedSampleModel.getBandOffsets()).allMatch(offset -> offset == 0) &&
                 Arrays.equals(bandedSampleModel.getBankIndices(), IntStream.range(0, raster.getNumBands()).toArray());
     }
 

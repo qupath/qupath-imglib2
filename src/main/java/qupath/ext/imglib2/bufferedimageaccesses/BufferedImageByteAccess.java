@@ -1,6 +1,7 @@
 package qupath.ext.imglib2.bufferedimageaccesses;
 
 import net.imglib2.img.basictypeaccess.ByteAccess;
+import qupath.ext.imglib2.SizableDataAccess;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -26,6 +27,7 @@ public class BufferedImageByteAccess implements ByteAccess, SizableDataAccess {
      * Create the buffered image access.
      *
      * @param image the image containing the values to return. Its pixels are expected to be stored in the byte format
+     * @throws NullPointerException if the provided image is null
      */
     public BufferedImageByteAccess(BufferedImage image) {
         this.raster = image.getRaster();
@@ -46,7 +48,7 @@ public class BufferedImageByteAccess implements ByteAccess, SizableDataAccess {
         int xyIndex = index % planeSize;
 
         if (canUseDataBuffer) {
-            return ((DataBufferByte) dataBuffer).getBankData()[b][xyIndex];
+            return (byte) dataBuffer.getElem(b, xyIndex);
         } else {
             return (byte) raster.getSample(xyIndex % width, xyIndex / width, b);
         }

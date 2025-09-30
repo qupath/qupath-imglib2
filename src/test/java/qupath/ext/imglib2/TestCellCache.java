@@ -20,7 +20,7 @@ public class TestCellCache {
     @Test
     void Check_Cell_Created() {
         byte[] data = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
-        Cell<ByteArray> expectedSampleCell = new SampleCell(data);
+        SampleCell expectedSampleCell = new SampleCell(data);
         TileRequest tileRequest = TileRequest.createInstance(
                 "path",
                 0,
@@ -37,8 +37,8 @@ public class TestCellCache {
     @Test
     void Check_Cell_Cached() {
         byte[] data = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
-        Cell<ByteArray> expectedSampleCell = new SampleCell(data);
-        Cell<ByteArray> notExpectedSampleCell = new SampleCell(new byte[0]);
+        SampleCell expectedSampleCell = new SampleCell(data);
+        SampleCell notExpectedSampleCell = new SampleCell(new byte[0]);
         TileRequest tileRequest = TileRequest.createInstance(
                 "path",
                 0,
@@ -53,10 +53,22 @@ public class TestCellCache {
         Assertions.assertEquals(expectedSampleCell, cell);
     }
 
-    private static class SampleCell extends Cell<ByteArray> {
+    private static class SampleCell extends Cell<SampleDataAccess> {
 
         public SampleCell(byte[] data) {
-            super(new int[] {5, 5, 5}, new long[] {0, 1, 2}, new ByteArray(data));
+            super(new int[] {5, 5, 5}, new long[] {0, 1, 2}, new SampleDataAccess(data));
+        }
+    }
+
+    private static class SampleDataAccess extends ByteArray implements SizableDataAccess {
+
+        public SampleDataAccess(byte[] data) {
+            super(data);
+        }
+
+        @Override
+        public int getSizeBytes() {
+            return 0;
         }
     }
 }

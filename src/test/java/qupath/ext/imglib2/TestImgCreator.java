@@ -13,7 +13,6 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import qupath.lib.color.ColorModelFactory;
 import qupath.lib.common.ColorTools;
 import qupath.lib.images.servers.AbstractImageServer;
 import qupath.lib.images.servers.ImageChannel;
@@ -23,7 +22,6 @@ import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.PixelType;
 import qupath.lib.regions.RegionRequest;
 
-import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -32,7 +30,6 @@ import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
-import java.awt.image.WritableRaster;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
@@ -322,21 +319,7 @@ public class TestImgCreator {
             } else {
                 DataBuffer dataBuffer = createDataBuffer(request);
 
-                return new BufferedImage(
-                        ColorModelFactory.createColorModel(getMetadata().getPixelType(), getMetadata().getChannels()),
-                        WritableRaster.createWritableRaster(
-                                new BandedSampleModel(
-                                        dataBuffer.getDataType(),
-                                        request.getWidth(),
-                                        request.getHeight(),
-                                        nChannels()
-                                ),
-                                dataBuffer,
-                                null
-                        ),
-                        false,
-                        null
-                );
+                return Utils.createBufferedImage(dataBuffer, request.getWidth(), request.getHeight(), nChannels(), getPixelType());
             }
         }
 
@@ -466,20 +449,12 @@ public class TestImgCreator {
         public BufferedImage readRegion(RegionRequest request) {
             DataBuffer dataBuffer = createDataBuffer(request);
 
-            return new BufferedImage(
-                    ColorModelFactory.createColorModel(getMetadata().getPixelType(), getMetadata().getChannels()),
-                    WritableRaster.createWritableRaster(
-                            new BandedSampleModel(
-                                    dataBuffer.getDataType(),
-                                    (int) (request.getWidth() / request.getDownsample()),
-                                    (int) (request.getHeight() / request.getDownsample()),
-                                    nChannels()
-                            ),
-                            dataBuffer,
-                            null
-                    ),
-                    false,
-                    null
+            return Utils.createBufferedImage(
+                    dataBuffer,
+                    (int) (request.getWidth() / request.getDownsample()),
+                    (int) (request.getHeight() / request.getDownsample()),
+                    nChannels(),
+                    getPixelType()
             );
         }
 

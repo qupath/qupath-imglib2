@@ -5,12 +5,38 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import org.junit.jupiter.api.Assertions;
+import qupath.lib.color.ColorModelFactory;
+import qupath.lib.images.servers.ImageChannel;
+import qupath.lib.images.servers.PixelType;
+
+import java.awt.image.BandedSampleModel;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.WritableRaster;
 
 public class Utils {
 
     @FunctionalInterface
     public interface PixelGetter {
         double get(int x, int y, int channel, int z, int t);
+    }
+
+    public static BufferedImage createBufferedImage(DataBuffer dataBuffer, int width, int height, int nChannels, PixelType pixelType) {
+        return new BufferedImage(
+                ColorModelFactory.createColorModel(pixelType, ImageChannel.getDefaultChannelList(nChannels)),
+                WritableRaster.createWritableRaster(
+                        new BandedSampleModel(
+                                dataBuffer.getDataType(),
+                                width,
+                                height,
+                                nChannels
+                        ),
+                        dataBuffer,
+                        null
+                ),
+                false,
+                null
+        );
     }
 
     public static <T extends RealType<T>> void assertRandomAccessibleEquals(RandomAccessibleInterval<T> accessible, PixelGetter pixelGetter, double downsample) {

@@ -1,6 +1,7 @@
 package qupath.ext.imglib2.bufferedimageaccesses;
 
 import net.imglib2.img.basictypeaccess.DoubleAccess;
+import qupath.ext.imglib2.SizableDataAccess;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -26,6 +27,7 @@ public class BufferedImageDoubleAccess implements DoubleAccess, SizableDataAcces
      * Create the buffered image access.
      *
      * @param image the image containing the values to return. Its pixels are expected to be stored in the double format
+     * @throws NullPointerException if the provided image is null
      */
     public BufferedImageDoubleAccess(BufferedImage image) {
         this.raster = image.getRaster();

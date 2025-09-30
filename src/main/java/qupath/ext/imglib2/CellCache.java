@@ -3,7 +3,6 @@ package qupath.ext.imglib2;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.imglib2.img.cell.Cell;
-import qupath.ext.imglib2.bufferedimageaccesses.SizableDataAccess;
 import qupath.lib.images.servers.TileRequest;
 
 import java.util.function.Function;

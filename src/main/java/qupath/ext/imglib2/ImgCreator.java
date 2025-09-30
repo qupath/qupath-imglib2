@@ -16,7 +16,6 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import qupath.ext.imglib2.bufferedimageaccesses.SizableDataAccess;
 import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageArgbAccess;
 import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageByteAccess;
 import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageDoubleAccess;
