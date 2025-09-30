@@ -2,7 +2,6 @@ package qupath.ext.imglib2;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
 import net.imglib2.img.cell.Cell;
 import net.imglib2.img.cell.CellGrid;
 import net.imglib2.img.cell.LazyCellImg;
@@ -17,6 +16,13 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
+import qupath.ext.imglib2.bufferedimageaccesses.SizableDataAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageArgbAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageByteAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageDoubleAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageFloatAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageIntAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageShortAccess;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.ServerTools;
@@ -46,7 +52,7 @@ import java.util.function.Function;
  * @param <T> the type of the returned accessibles
  * @param <A> the type contained in the input image
  */
-public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends ArrayDataAccess<A>> {
+public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends SizableDataAccess> {
 
     private final ImageServer<BufferedImage> server;
     private final T type;
@@ -262,14 +268,14 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Arra
          */
         public ImgCreator<T, ?> build() {
             if (server.isRGB()) {
-                return new ImgCreator<>(this, BufferedImagePixelsExtractor::getArgb);
+                return new ImgCreator<>(this, BufferedImageArgbAccess::new);
             } else {
                 return switch (server.getPixelType()) {
-                    case UINT8, INT8 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getBytes(image.getRaster()));
-                    case UINT16, INT16 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getShorts(image.getRaster()));
-                    case UINT32, INT32 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getIntegers(image.getRaster()));
-                    case FLOAT32 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getFloats(image.getRaster()));
-                    case FLOAT64 -> new ImgCreator<>(this, image -> BufferedImagePixelsExtractor.getDoubles(image.getRaster()));
+                    case UINT8, INT8 -> new ImgCreator<>(this, BufferedImageByteAccess::new);
+                    case UINT16, INT16 -> new ImgCreator<>(this, BufferedImageShortAccess::new);
+                    case UINT32, INT32 -> new ImgCreator<>(this, BufferedImageIntAccess::new);
+                    case FLOAT32 -> new ImgCreator<>(this, BufferedImageFloatAccess::new);
+                    case FLOAT64 -> new ImgCreator<>(this, BufferedImageDoubleAccess::new);
                 };
             }
         }

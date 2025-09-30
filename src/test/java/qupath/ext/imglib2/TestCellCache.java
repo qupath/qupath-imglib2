@@ -1,6 +1,6 @@
 package qupath.ext.imglib2;
 
-import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
+import net.imglib2.img.basictypeaccess.DataAccess;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.cell.Cell;
 import org.junit.jupiter.api.Assertions;
@@ -29,7 +29,7 @@ public class TestCellCache {
         );
         CellCache cellCache = new CellCache(1024);
 
-        Cell<? extends ArrayDataAccess<?>> cell = cellCache.getCell(tileRequest, t -> expectedSampleCell);
+        Cell<? extends DataAccess> cell = cellCache.getCell(tileRequest, t -> expectedSampleCell);
 
         Assertions.assertEquals(expectedSampleCell, cell);
     }
@@ -48,7 +48,7 @@ public class TestCellCache {
         CellCache cellCache = new CellCache(1024);
         cellCache.getCell(tileRequest, t -> expectedSampleCell);
 
-        Cell<? extends ArrayDataAccess<?>> cell = cellCache.getCell(tileRequest, t -> notExpectedSampleCell);
+        Cell<? extends DataAccess> cell = cellCache.getCell(tileRequest, t -> notExpectedSampleCell);
 
         Assertions.assertEquals(expectedSampleCell, cell);
     }
