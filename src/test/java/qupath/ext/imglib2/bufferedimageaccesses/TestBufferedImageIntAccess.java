@@ -19,19 +19,19 @@ public class TestBufferedImageIntAccess {
         int nChannels = 2;
         int[][] pixels = new int[][] {
                 new int[] {
-                        35584984, 6, 8,
+                        35584984, -6, 8,
                         4, 556, 7
                 },
                 new int[] {
-                        34, 446456, 0,
+                        34, -446456, 0,
                         65, 7, 790
                 },
         };
         int[] expectedPixels = new int[] {
-                35584984, 6, 8,
+                35584984, -6, 8,
                 4, 556, 7,
 
-                34, 446456, 0,
+                34, -446456, 0,
                 65, 7, 790
         };
         DataBuffer dataBuffer = new DataBufferInt(pixels, nChannels);

@@ -19,20 +19,20 @@ public class TestBufferedImageByteAccess {
         int nChannels = 2;
         byte[][] pixels = new byte[][] {
                 new byte[] {
-                        3, 6, 8,
+                        -3, 6, 8,
                         4, 56, 7
                 },
                 new byte[] {
                         34, 46, 0,
-                        65, 7, 90
+                        65, 7, -90
                 },
         };
         byte[] expectedPixels = new byte[] {
-                3, 6, 8,
+                -3, 6, 8,
                 4, 56, 7,
 
                 34, 46, 0,
-                65, 7, 90
+                65, 7, -90
         };
         DataBuffer dataBuffer = new DataBufferByte(pixels, nChannels);
         BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.INT8);

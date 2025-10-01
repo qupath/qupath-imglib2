@@ -19,20 +19,20 @@ public class TestBufferedImageFloatAccess {
         int nChannels = 2;
         float[][] pixels = new float[][] {
                 new float[] {
-                        3.4f, 6, 8,
-                        4, 55.6f, 7
+                        3.4f, -6, 8,
+                        -4, 55.6f, 7
                 },
                 new float[] {
                         34, 4.56f, 0,
-                        65, 7, 7.9f
+                        -65, 7, 7.9f
                 },
         };
         float[] expectedPixels = new float[] {
-                3.4f, 6, 8,
-                4, 55.6f, 7,
+                3.4f, -6, 8,
+                -4, 55.6f, 7,
 
                 34, 4.56f, 0,
-                65, 7, 7.9f
+                -65, 7, 7.9f
         };
         DataBuffer dataBuffer = new DataBufferFloat(pixels, nChannels);
         BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.FLOAT32);

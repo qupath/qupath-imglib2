@@ -9,33 +9,64 @@ import qupath.lib.images.servers.PixelType;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferShort;
+import java.awt.image.DataBufferUShort;
 
 public class TestBufferedImageShortAccess {
 
     @Test
-    void Check_Pixels() {
+    void Check_Pixels_With_DataBufferShort() {
         int width = 3;
         int height = 2;
         int nChannels = 2;
         short[][] pixels = new short[][] {
                 new short[] {
-                        355, 6, 8,
+                        -355, 6, 8,
                         4, 556, 7
                 },
                 new short[] {
                         34, 446, 0,
-                        65, 7, 790
+                        65, 7, -790
                 },
         };
         short[] expectedPixels = new short[] {
-                355, 6, 8,
+                -355, 6, 8,
                 4, 556, 7,
 
                 34, 446, 0,
-                65, 7, 790
+                65, 7, -790
         };
         DataBuffer dataBuffer = new DataBufferShort(pixels, nChannels);
         BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.INT16);
+
+        BufferedImageShortAccess bufferedImageAccess = new BufferedImageShortAccess(image);
+
+        assertArrayEqualsShortAccess(expectedPixels, bufferedImageAccess);
+    }
+
+    @Test
+    void Check_Pixels_With_DataBufferUShort() {
+        int width = 3;
+        int height = 2;
+        int nChannels = 2;
+        short[][] pixels = new short[][] {
+                new short[] {
+                        -355, 6, 8,
+                        4, 556, 7
+                },
+                new short[] {
+                        34, 446, 0,
+                        65, 7, -790
+                },
+        };
+        short[] expectedPixels = new short[] {
+                -355, 6, 8,
+                4, 556, 7,
+
+                34, 446, 0,
+                65, 7, -790
+        };
+        DataBuffer dataBuffer = new DataBufferUShort(pixels, nChannels);
+        BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.UINT16);
 
         BufferedImageShortAccess bufferedImageAccess = new BufferedImageShortAccess(image);
 

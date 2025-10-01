@@ -19,20 +19,20 @@ public class TestBufferedImageDoubleAccess {
         int nChannels = 2;
         double[][] pixels = new double[][] {
                 new double[] {
-                        3.4, 6, 8,
+                        -3.4, 6, 8,
                         4, 55.6, 7
                 },
                 new double[] {
-                        34, 4.56, 0,
-                        65, 7, 7.9
+                        34, -4.56, 0,
+                        65, 7, -7.9
                 },
         };
         double[] expectedPixels = new double[] {
-                3.4, 6, 8,
+                -3.4, 6, 8,
                 4, 55.6, 7,
 
-                34, 4.56, 0,
-                65, 7, 7.9
+                34, -4.56, 0,
+                65, 7, -7.9
         };
         DataBuffer dataBuffer = new DataBufferDouble(pixels, nChannels);
         BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.FLOAT64);
