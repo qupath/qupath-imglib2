@@ -4,7 +4,7 @@ A Java library to link QuPath with ImgLib2.
 
 ## Sample script
 
-Here is a sample script that shows how to use the library from QuPath.
+Here is a sample script that shows how to use the library from QuPath:
 
 ```groovy
 import qupath.ext.imglib2.ImgCreator
