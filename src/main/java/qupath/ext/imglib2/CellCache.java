@@ -2,13 +2,7 @@ package qupath.ext.imglib2;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
 import net.imglib2.img.cell.Cell;
-import qupath.ext.imglib2.immutablearrays.ImmutableByteArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableDoubleArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableFloatArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableIntArray;
-import qupath.ext.imglib2.immutablearrays.ImmutableShortArray;
 import qupath.lib.images.servers.TileRequest;
 
 import java.util.function.Function;
@@ -20,7 +14,7 @@ import java.util.function.Function;
  */
 public class CellCache {
 
-    private final Cache<TileRequest, Cell<? extends ArrayDataAccess<?>>> cache;
+    private final Cache<TileRequest, Cell<? extends SizableDataAccess>> cache;
 
     /**
      * Create a cache with the specified maximum size.
@@ -30,25 +24,8 @@ public class CellCache {
      */
     public CellCache(int cacheMaxSizeMiB) {
         this.cache = Caffeine.newBuilder()
-                .weigher((TileRequest tile, Cell<? extends ArrayDataAccess<?>> cell) -> {
-                    int valueSizeBytes;
-                    if (cell.getData() instanceof ImmutableByteArray) {
-                        valueSizeBytes = 1;
-                    } else if (cell.getData() instanceof ImmutableShortArray) {
-                        valueSizeBytes = 2;
-                    } else if (cell.getData() instanceof ImmutableIntArray) {
-                        valueSizeBytes = 4;
-                    } else if (cell.getData() instanceof ImmutableFloatArray) {
-                        valueSizeBytes = 4;
-                    } else if (cell.getData() instanceof ImmutableDoubleArray) {
-                        valueSizeBytes = 8;
-                    } else {
-                        valueSizeBytes = 1;
-                    }
-
-                    return (int) (cell.getData().getArrayLength() * valueSizeBytes / (1024f * 1024f));
-                })
-                .maximumWeight(cacheMaxSizeMiB)
+                .weigher(CellCache::weigher)
+                .maximumWeight((long) cacheMaxSizeMiB * 1024 * 1024)
                 .softValues()
                 .build();
     }
@@ -61,7 +38,11 @@ public class CellCache {
      *                   a cell for the provided tile request
      * @return a cell corresponding to the provided tile request
      */
-    public Cell<? extends ArrayDataAccess<?>> getCell(TileRequest tileRequest, Function<TileRequest, Cell<? extends ArrayDataAccess<?>>> cellGetter) {
+    public Cell<? extends SizableDataAccess> getCell(TileRequest tileRequest, Function<TileRequest, Cell<? extends SizableDataAccess>> cellGetter) {
         return cache.get(tileRequest, cellGetter);
+    }
+
+    private static int weigher(TileRequest tile, Cell<? extends SizableDataAccess> cell) {
+        return cell.getData().getSizeBytes();
     }
 }
