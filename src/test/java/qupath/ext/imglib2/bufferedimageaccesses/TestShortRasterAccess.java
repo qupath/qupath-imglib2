@@ -4,14 +4,13 @@ import net.imglib2.img.basictypeaccess.ShortAccess;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import qupath.ext.imglib2.Utils;
-import qupath.lib.images.servers.PixelType;
 
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
+import java.awt.image.Raster;
 
-public class TestBufferedImageShortAccess {
+public class TestShortRasterAccess {
 
     @Test
     void Check_Pixels_With_DataBufferShort() {
@@ -36,9 +35,9 @@ public class TestBufferedImageShortAccess {
                 65, 7, -790
         };
         DataBuffer dataBuffer = new DataBufferShort(pixels, nChannels);
-        BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.INT16);
+        Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        BufferedImageShortAccess bufferedImageAccess = new BufferedImageShortAccess(image);
+        ShortRasterAccess bufferedImageAccess = new ShortRasterAccess(raster);
 
         assertArrayEqualsShortAccess(expectedPixels, bufferedImageAccess);
     }
@@ -66,9 +65,9 @@ public class TestBufferedImageShortAccess {
                 65, 7, -790
         };
         DataBuffer dataBuffer = new DataBufferUShort(pixels, nChannels);
-        BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.UINT16);
+        Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        BufferedImageShortAccess bufferedImageAccess = new BufferedImageShortAccess(image);
+        ShortRasterAccess bufferedImageAccess = new ShortRasterAccess(raster);
 
         assertArrayEqualsShortAccess(expectedPixels, bufferedImageAccess);
     }

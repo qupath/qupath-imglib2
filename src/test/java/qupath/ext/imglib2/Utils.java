@@ -21,19 +21,23 @@ public class Utils {
         double get(int x, int y, int channel, int z, int t);
     }
 
+    public static WritableRaster createRaster(DataBuffer dataBuffer, int width, int height, int nChannels) {
+        return WritableRaster.createWritableRaster(
+                new BandedSampleModel(
+                        dataBuffer.getDataType(),
+                        width,
+                        height,
+                        nChannels
+                ),
+                dataBuffer,
+                null
+        );
+    }
+
     public static BufferedImage createBufferedImage(DataBuffer dataBuffer, int width, int height, int nChannels, PixelType pixelType) {
         return new BufferedImage(
                 ColorModelFactory.createColorModel(pixelType, ImageChannel.getDefaultChannelList(nChannels)),
-                WritableRaster.createWritableRaster(
-                        new BandedSampleModel(
-                                dataBuffer.getDataType(),
-                                width,
-                                height,
-                                nChannels
-                        ),
-                        dataBuffer,
-                        null
-                ),
+                createRaster(dataBuffer, width, height, nChannels),
                 false,
                 null
         );

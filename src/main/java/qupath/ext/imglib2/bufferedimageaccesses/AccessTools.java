@@ -16,13 +16,13 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
- * A collection of helpers methods for buffered image data accesses.
+ * A collection of helpers methods for buffered image and raster data accesses.
  */
-class BufferedImageAccessTools {
+class AccessTools {
 
-    private static final Logger logger = LoggerFactory.getLogger(BufferedImageAccessTools.class);
+    private static final Logger logger = LoggerFactory.getLogger(AccessTools.class);
 
-    private BufferedImageAccessTools() {
+    private AccessTools() {
         throw new AssertionError("This class is not instantiable.");
     }
 

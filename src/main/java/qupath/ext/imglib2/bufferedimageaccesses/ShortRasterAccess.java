@@ -3,19 +3,18 @@ package qupath.ext.imglib2.bufferedimageaccesses;
 import net.imglib2.img.basictypeaccess.ShortAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.Raster;
 
 /**
- * A {@link ShortAccess} whose elements are computed from a {@link BufferedImage}.
+ * A {@link ShortAccess} whose elements are computed from a {@link Raster}.
  * <p>
  * This {@link ShortAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  */
-public class BufferedImageShortAccess implements ShortAccess, SizableDataAccess {
+public class ShortRasterAccess implements ShortAccess, SizableDataAccess {
 
     private final Raster raster;
     private final DataBuffer dataBuffer;
@@ -25,22 +24,22 @@ public class BufferedImageShortAccess implements ShortAccess, SizableDataAccess 
     private final int size;
 
     /**
-     * Create the buffered image access.
+     * Create the short raster access.
      *
-     * @param image the image containing the values to return. Its pixels are expected to be stored in the short format
+     * @param raster the raster containing the values to return. Its pixels are expected to be stored in the short format
      * @throws NullPointerException if the provided image is null
      */
-    public BufferedImageShortAccess(BufferedImage image) {
-        this.raster = image.getRaster();
+    public ShortRasterAccess(Raster raster) {
+        this.raster = raster;
         this.dataBuffer = this.raster.getDataBuffer();
 
         this.width = this.raster.getWidth();
         this.planeSize = width * this.raster.getHeight();
 
         this.canUseDataBuffer = (this.dataBuffer instanceof DataBufferUShort || this.dataBuffer instanceof DataBufferShort) &&
-                BufferedImageAccessTools.isSampleModelDirectlyUsable(this.raster);
+                AccessTools.isSampleModelDirectlyUsable(this.raster);
 
-        this.size = BufferedImageAccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
+        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
     }
 
     @Override

@@ -3,18 +3,17 @@ package qupath.ext.imglib2.bufferedimageaccesses;
 import net.imglib2.img.basictypeaccess.FloatAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferFloat;
 import java.awt.image.Raster;
 
 /**
- * A {@link FloatAccess} whose elements are computed from a {@link BufferedImage}.
+ * A {@link FloatAccess} whose elements are computed from a {@link Raster}.
  * <p>
  * This {@link FloatAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  */
-public class BufferedImageFloatAccess implements FloatAccess, SizableDataAccess {
+public class FloatRasterAccess implements FloatAccess, SizableDataAccess {
 
     private final Raster raster;
     private final DataBuffer dataBuffer;
@@ -24,22 +23,22 @@ public class BufferedImageFloatAccess implements FloatAccess, SizableDataAccess 
     private final int size;
 
     /**
-     * Create the buffered image access.
+     * Create the float raster access.
      *
-     * @param image the image containing the values to return. Its pixels are expected to be stored in the float format
+     * @param raster the raster containing the values to return. Its pixels are expected to be stored in the float format
      * @throws NullPointerException if the provided image is null
      */
-    public BufferedImageFloatAccess(BufferedImage image) {
-        this.raster = image.getRaster();
+    public FloatRasterAccess(Raster raster) {
+        this.raster = raster;
         this.dataBuffer = this.raster.getDataBuffer();
 
         this.width = this.raster.getWidth();
         this.planeSize = width * this.raster.getHeight();
 
         this.canUseDataBuffer = this.dataBuffer instanceof DataBufferFloat &&
-                BufferedImageAccessTools.isSampleModelDirectlyUsable(this.raster);
+                AccessTools.isSampleModelDirectlyUsable(this.raster);
 
-        this.size = BufferedImageAccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
+        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
     }
 
     @Override

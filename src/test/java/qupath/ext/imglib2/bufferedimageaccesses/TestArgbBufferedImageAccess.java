@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 
-public class TestBufferedImageArgbAccess {
+public class TestArgbBufferedImageAccess {
 
     @Test
     void Check_Pixels() {
@@ -20,9 +20,9 @@ public class TestBufferedImageArgbAccess {
         };
         image.setRGB(0, 0, width, height, expectedPixels, 0, width);
 
-        BufferedImageArgbAccess bufferedImageArgbAccess = new BufferedImageArgbAccess(image);
+        ArgbBufferedImageAccess argbBufferedImageAccess = new ArgbBufferedImageAccess(image);
 
-        assertArrayEqualsIntAccess(expectedPixels, bufferedImageArgbAccess);
+        assertArrayEqualsIntAccess(expectedPixels, argbBufferedImageAccess);
     }
 
     private void assertArrayEqualsIntAccess(int[] expectedArray, IntAccess access) {

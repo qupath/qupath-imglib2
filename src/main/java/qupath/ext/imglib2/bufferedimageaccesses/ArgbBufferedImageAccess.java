@@ -9,12 +9,12 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.SinglePixelPackedSampleModel;
 
 /**
- * An {@link IntAccess} whose elements are computed from a {@link BufferedImage}.
+ * An {@link IntAccess} whose elements are computed from an (A)RGB {@link BufferedImage}.
  * <p>
  * This {@link IntAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  */
-public class BufferedImageArgbAccess implements IntAccess, SizableDataAccess {
+public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess {
 
     private final BufferedImage image;
     private final DataBuffer dataBuffer;
@@ -29,7 +29,7 @@ public class BufferedImageArgbAccess implements IntAccess, SizableDataAccess {
      * @param image the image containing the values to return. It is expected to be (A)RGB
      * @throws NullPointerException if the provided image is null
      */
-    public BufferedImageArgbAccess(BufferedImage image) {
+    public ArgbBufferedImageAccess(BufferedImage image) {
         this.image = image;
         this.dataBuffer = this.image.getRaster().getDataBuffer();
 
@@ -39,7 +39,7 @@ public class BufferedImageArgbAccess implements IntAccess, SizableDataAccess {
         this.canUseDataBuffer = image.getRaster().getDataBuffer() instanceof DataBufferInt &&
                 image.getRaster().getSampleModel() instanceof SinglePixelPackedSampleModel;
 
-        this.size = BufferedImageAccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
+        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
     }
 
     @Override

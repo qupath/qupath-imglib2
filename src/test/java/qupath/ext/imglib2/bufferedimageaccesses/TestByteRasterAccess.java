@@ -4,13 +4,12 @@ import net.imglib2.img.basictypeaccess.ByteAccess;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import qupath.ext.imglib2.Utils;
-import qupath.lib.images.servers.PixelType;
 
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
 
-public class TestBufferedImageByteAccess {
+public class TestByteRasterAccess {
 
     @Test
     void Check_Pixels() {
@@ -35,9 +34,9 @@ public class TestBufferedImageByteAccess {
                 65, 7, -90
         };
         DataBuffer dataBuffer = new DataBufferByte(pixels, nChannels);
-        BufferedImage image = Utils.createBufferedImage(dataBuffer, width, height, nChannels, PixelType.INT8);
+        Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        BufferedImageByteAccess bufferedImageAccess = new BufferedImageByteAccess(image);
+        ByteRasterAccess bufferedImageAccess = new ByteRasterAccess(raster);
 
         assertArrayEqualsByteAccess(expectedPixels, bufferedImageAccess);
     }

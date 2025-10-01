@@ -16,12 +16,12 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageArgbAccess;
-import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageByteAccess;
-import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageDoubleAccess;
-import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageFloatAccess;
-import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageIntAccess;
-import qupath.ext.imglib2.bufferedimageaccesses.BufferedImageShortAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.ArgbBufferedImageAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.ByteRasterAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.DoubleRasterAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.FloatRasterAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.IntRasterAccess;
+import qupath.ext.imglib2.bufferedimageaccesses.ShortRasterAccess;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.ServerTools;
@@ -74,6 +74,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * returned accessibles of this class. It is recommended to use {@link #builder(ImageServer, NativeType)} instead.
      *
      * @param server the input image
+     * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
     public static Builder<?> builder(ImageServer<BufferedImage> server) {
@@ -127,6 +128,8 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      *
      * @param server the input image
      * @param type the expected type of the output image
+     * @return a builder to create an instance of this class
+     * @param <T> the type corresponding to the provided image
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if the provided image
      * has less than one channel
      */
@@ -267,14 +270,14 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
          */
         public ImgCreator<T, ?> build() {
             if (server.isRGB()) {
-                return new ImgCreator<>(this, BufferedImageArgbAccess::new);
+                return new ImgCreator<>(this, ArgbBufferedImageAccess::new);
             } else {
                 return switch (server.getPixelType()) {
-                    case UINT8, INT8 -> new ImgCreator<>(this, BufferedImageByteAccess::new);
-                    case UINT16, INT16 -> new ImgCreator<>(this, BufferedImageShortAccess::new);
-                    case UINT32, INT32 -> new ImgCreator<>(this, BufferedImageIntAccess::new);
-                    case FLOAT32 -> new ImgCreator<>(this, BufferedImageFloatAccess::new);
-                    case FLOAT64 -> new ImgCreator<>(this, BufferedImageDoubleAccess::new);
+                    case UINT8, INT8 -> new ImgCreator<>(this, image -> new ByteRasterAccess(image.getRaster()));
+                    case UINT16, INT16 -> new ImgCreator<>(this, image -> new ShortRasterAccess(image.getRaster()));
+                    case UINT32, INT32 -> new ImgCreator<>(this, image -> new IntRasterAccess(image.getRaster()));
+                    case FLOAT32 -> new ImgCreator<>(this, image -> new FloatRasterAccess(image.getRaster()));
+                    case FLOAT64 -> new ImgCreator<>(this, image -> new DoubleRasterAccess(image.getRaster()));
                 };
             }
         }
