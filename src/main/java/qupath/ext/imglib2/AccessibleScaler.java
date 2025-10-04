@@ -147,7 +147,7 @@ public class AccessibleScaler {
 
             return Views.stack(LongStream.range(0, input.dimension(dimensionToDivide))
                     .mapToObj(i -> Views.hyperSlice(input, dimensionToDivide, i))
-                    .map(view -> scaleWithLinearInterpolation(view, scale))
+                    .map(view -> scaleWithoutChecks(view, scale, scale2D, interpolatorFactory))
                     .toList()
             );
         }
