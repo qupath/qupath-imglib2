@@ -77,8 +77,9 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static Builder<?> builder(ImageServer<BufferedImage> server) {
-        return new Builder<>(server);
+    public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server) {
+        // Despite the potential warning, T is necessary, otherwise a cannot infer type arguments error occurs
+        return new Builder<T>(server, getTypeOfServer(server));
     }
 
     /**
@@ -236,10 +237,6 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
         private final T type;
         private CellCache cellCache = defaultCellCache;
 
-        private Builder(ImageServer<BufferedImage> server) {
-            this(server, getTypeOfServer(server));
-        }
-
         private Builder(ImageServer<BufferedImage> server, T type) {
             checkType(server, type);
             if (server.nChannels() <= 0) {
@@ -280,24 +277,6 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
                     case FLOAT64 -> new ImgCreator<>(this, image -> new DoubleRasterAccess(image.getRaster()));
                 };
             }
-        }
-
-        @SuppressWarnings("unchecked")
-        private static <T extends NativeType<T> & NumericType<T>> T getTypeOfServer(ImageServer<?> server) {
-            if (server.isRGB()) {
-                return (T) new ARGBType();
-            }
-
-            return switch (server.getPixelType()) {
-                case UINT8 -> (T) new UnsignedByteType();
-                case INT8 -> (T) new ByteType();
-                case UINT16 -> (T) new UnsignedShortType();
-                case INT16 -> (T) new ShortType();
-                case UINT32 -> (T) new UnsignedIntType();
-                case INT32 -> (T) new IntType();
-                case FLOAT32 -> (T) new FloatType();
-                case FLOAT64 -> (T) new DoubleType();
-            };
         }
 
         private static <T> void checkType(ImageServer<?> server, T type) {
@@ -377,6 +356,24 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
                 }
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends NativeType<T> & NumericType<T>> T getTypeOfServer(ImageServer<?> server) {
+        if (server.isRGB()) {
+            return (T) new ARGBType();
+        }
+
+        return switch (server.getPixelType()) {
+            case UINT8 -> (T) new UnsignedByteType();
+            case INT8 -> (T) new ByteType();
+            case UINT16 -> (T) new UnsignedShortType();
+            case INT16 -> (T) new ShortType();
+            case UINT32 -> (T) new UnsignedIntType();
+            case INT32 -> (T) new IntType();
+            case FLOAT32 -> (T) new FloatType();
+            case FLOAT64 -> (T) new DoubleType();
+        };
     }
 
     private Cell<A> createCell(TileRequest tile) {
