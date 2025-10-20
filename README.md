@@ -41,6 +41,16 @@ var safeImg = ImgCreator.builder(server, type).build().createForLevel(level)
 println safeImg
 
 
+// Previous accessibles are always 5D, but it is also possible to make a projection on some axis
+// to get a 2D, 3D, or 4D image:
+var dimensionsToDrop = Map.of(
+        Dimension.CHANNEL, 0,       // projection on the channel axis, only the first channel is kept
+        Dimension.TIME, 0,          // projection on the time axis, only the first timepoint is kept
+)
+var xyzImg = ImgCreator.builder(server).build().createForLevel(level, dimensionsToDrop)
+println xyzImg
+
+
 // Once you have an image (or random accessible), you can use regular ImgLib2 functions
 // For example, to read the pixel located at [x:1, y:2; c:0; z:0; t:0]:
 var randomAccess = randomAccessible.randomAccess()
