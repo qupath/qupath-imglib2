@@ -16,30 +16,44 @@ repositories {
 
 dependencies {
     // ImgLib2
-    api("net.imglib2:imglib2:7.1.5")
-    implementation("net.imglib2:imglib2-realtransform:4.0.3")
+    api(sciJava.imglib2.imglib2)
+    implementation(sciJava.imglib2.realtransform)
 
     // QuPath
-    api("io.github.qupath:qupath-core:0.6.0")
+    api(qupath.qupath.core)
 
     // Logging
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation(qupath.slf4j)
 
-    // Cache
+    // Cache - can later use QuPath catalog (added in v0.7.0)
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
 
     // Unit tests
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation(qupath.junit)
+    testImplementation(qupath.junit.platform)
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(findToolchainVersion())
     }
 
     withSourcesJar()
     withJavadocJar()
+}
+
+/**
+ * We may need to be able to override the version catalog Java with a system property
+ * if we're including this build alongside QuPath's latest code.
+ */
+fun findToolchainVersion(): String {
+    // Try System property
+    val toolchainVersion = System.getProperty("toolchain")
+    if (!toolchainVersion.isNullOrEmpty()) {
+        return toolchainVersion
+    }
+    // Default to version catalog
+    return qupath.versions.jdk.get()
 }
 
 tasks.test {
