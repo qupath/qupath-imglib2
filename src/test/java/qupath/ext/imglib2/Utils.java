@@ -53,11 +53,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.X)] * downsample),
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.Y)] * downsample),
-                            position[ImgCreator.getIndexOfDimension(Dimension.CHANNEL)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.Z)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.TIME)]
+                            (int) (position[ImgCreator.AXIS_X] * downsample),
+                            (int) (position[ImgCreator.AXIS_Y] * downsample),
+                            position[ImgCreator.AXIS_CHANNEL],
+                            position[ImgCreator.AXIS_Z],
+                            position[ImgCreator.AXIS_TIME]
                     ),
                     pixel.getRealDouble()
             );
@@ -74,11 +74,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.X)] * downsample),
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.Y)] * downsample),
-                            position[ImgCreator.getIndexOfDimension(Dimension.CHANNEL)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.Z)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.TIME)]
+                            (int) (position[ImgCreator.AXIS_X] * downsample),
+                            (int) (position[ImgCreator.AXIS_Y] * downsample),
+                            position[ImgCreator.AXIS_CHANNEL],
+                            position[ImgCreator.AXIS_Z],
+                            position[ImgCreator.AXIS_TIME]
                     ),
                     pixel.get()
             );

@@ -158,10 +158,9 @@ public class TestImgCreator {
     @Test
     void Check_X_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
-        Dimension dimension = Dimension.X;
         int expectedSize = imageServer.getWidth();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.getIndexOfDimension(dimension);
+        int dimensionIndex = ImgCreator.AXIS_X;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -171,10 +170,9 @@ public class TestImgCreator {
     @Test
     void Check_Y_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
-        Dimension dimension = Dimension.Y;
         int expectedSize = imageServer.getHeight();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.getIndexOfDimension(dimension);
+        int dimensionIndex = ImgCreator.AXIS_Y;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -184,10 +182,9 @@ public class TestImgCreator {
     @Test
     void Check_Channel_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
-        Dimension dimension = Dimension.CHANNEL;
         int expectedSize = imageServer.nChannels();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.getIndexOfDimension(dimension);
+        int dimensionIndex = ImgCreator.AXIS_CHANNEL;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -197,10 +194,9 @@ public class TestImgCreator {
     @Test
     void Check_Z_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
-        Dimension dimension = Dimension.Z;
         int expectedSize = imageServer.getMetadata().getSizeZ();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.getIndexOfDimension(dimension);
+        int dimensionIndex = ImgCreator.AXIS_Z;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -210,10 +206,9 @@ public class TestImgCreator {
     @Test
     void Check_Time_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
-        Dimension dimension = Dimension.TIME;
         int expectedSize = imageServer.getMetadata().getSizeT();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.getIndexOfDimension(dimension);
+        int dimensionIndex = ImgCreator.AXIS_TIME;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
