@@ -53,11 +53,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.X)] * downsample),
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.Y)] * downsample),
-                            position[ImgCreator.getIndexOfDimension(Dimension.CHANNEL)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.Z)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.TIME)]
+                            (int) (position[ImgCreator.X_DIMENSION] * downsample),
+                            (int) (position[ImgCreator.Y_DIMENSION] * downsample),
+                            position[ImgCreator.CHANNEL_DIMENSION],
+                            position[ImgCreator.Z_DIMENSION],
+                            position[ImgCreator.TIME_DIMENSION]
                     ),
                     pixel.getRealDouble()
             );
@@ -74,11 +74,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.X)] * downsample),
-                            (int) (position[ImgCreator.getIndexOfDimension(Dimension.Y)] * downsample),
-                            position[ImgCreator.getIndexOfDimension(Dimension.CHANNEL)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.Z)],
-                            position[ImgCreator.getIndexOfDimension(Dimension.TIME)]
+                            (int) (position[ImgCreator.X_DIMENSION] * downsample),
+                            (int) (position[ImgCreator.Y_DIMENSION] * downsample),
+                            position[ImgCreator.CHANNEL_DIMENSION],
+                            position[ImgCreator.Z_DIMENSION],
+                            position[ImgCreator.TIME_DIMENSION]
                     ),
                     pixel.get()
             );

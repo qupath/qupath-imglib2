@@ -38,12 +38,6 @@ import java.util.function.Function;
 /**
  * A class to create {@link Img} or {@link RandomAccessibleInterval} from an {@link ImageServer}.
  * <p>
- * The number of dimensions of accessibles created by this class will always be equal to the number of instances of {@link Dimension}.
- * See {@link #getIndexOfDimension(Dimension)} to find out the physical meaning of each dimension.
- * <p>
- * Warning: each accessible returned by this class is immutable. This means that any attempt to write data to them will either result in an
- * {@link UnsupportedOperationException} or be ignored.
- * <p>
  * Use a {@link #builder(ImageServer)} or {@link #builder(ImageServer, NativeType)} to create an instance of this class.
  * <p>
  * This class is thread-safe.
@@ -53,6 +47,26 @@ import java.util.function.Function;
  */
 public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends SizableDataAccess> {
 
+    /**
+     * The index of the X dimension of accessibles returned by functions of this class
+     */
+    public static final int X_DIMENSION = 0;
+    /**
+     * The index of the Y dimension of accessibles returned by functions of this class
+     */
+    public static final int Y_DIMENSION = 1;
+    /**
+     * The index of the channel dimension of accessibles returned by functions of this class
+     */
+    public static final int CHANNEL_DIMENSION = 2;
+    /**
+     * The index of the Z dimension of accessibles returned by functions of this class
+     */
+    public static final int Z_DIMENSION = 3;
+    /**
+     * The index of the time dimension of accessibles returned by functions of this class
+     */
+    public static final int TIME_DIMENSION = 4;
     private final ImageServer<BufferedImage> server;
     private final T type;
     private final CellCache cellCache;
@@ -76,6 +90,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
+     * @param <T> the type of the output image
      */
     public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server) {
         // Despite the potential warning, T is necessary, otherwise a cannot infer type arguments error occurs
@@ -139,24 +154,13 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
     }
 
     /**
-     * Get the index of the provided dimension on accessibles returned by this class. The number of dimensions of the accessibles will always be
-     * equal to the number of elements of {@link Dimension}.
-     *
-     * @param dimension the dimension whose index should be retrieved
-     * @return the index of the provided dimension on accessibles returned by this class
-     */
-    public static int getIndexOfDimension(Dimension dimension) {
-        return switch (dimension) {
-            case X -> 0;
-            case Y -> 1;
-            case CHANNEL -> 2;
-            case Z -> 3;
-            case TIME -> 4;
-        };
-    }
-
-    /**
-     * Create an {@link Img} from the input image and the provided level. See the description of this class for more information.
+     * Create an {@link Img} from the input image and the provided level.
+     * <p>
+     * The {@link Img} returned by this class is immutable. This means that any attempt to write data to it will result in an
+     * {@link UnsupportedOperationException}.
+     * <p>
+     * See {@link #X_DIMENSION}, {@link #Y_DIMENSION}, {@link #CHANNEL_DIMENSION}, {@link #Z_DIMENSION}, and {@link #TIME_DIMENSION} to get the physical
+     * interpretation of the dimensions of the returned {@link Img}.
      * <p>
      * Pixels of the returned image are lazily fetched.
      *
@@ -198,8 +202,13 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
     }
 
     /**
-     * Create a {@link RandomAccessibleInterval} from the input image and the provided downsample. See the description of this
-     * class for more information.
+     * Create a {@link RandomAccessibleInterval} from the input image and the provided downsample.
+     * <p>
+     * The {@link RandomAccessibleInterval} returned by this class is immutable. This means that any attempt to write data to it will result in an
+     * {@link UnsupportedOperationException}.
+     * <p>
+     * See {@link #X_DIMENSION}, {@link #Y_DIMENSION}, {@link #CHANNEL_DIMENSION}, {@link #Z_DIMENSION}, and {@link #TIME_DIMENSION} to get the physical
+     * interpretation of the dimensions of the returned {@link RandomAccessibleInterval}.
      * <p>
      * Values of the returned image are lazily fetched.
      * <p>
