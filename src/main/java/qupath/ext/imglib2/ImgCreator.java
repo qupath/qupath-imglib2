@@ -48,25 +48,25 @@ import java.util.function.Function;
 public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends SizableDataAccess> {
 
     /**
-     * The index of the X dimension of accessibles returned by functions of this class
+     * The index of the X axis of accessibles returned by functions of this class
      */
-    public static final int X_DIMENSION = 0;
+    public static final int AXIS_X = 0;
     /**
-     * The index of the Y dimension of accessibles returned by functions of this class
+     * The index of the Y axis of accessibles returned by functions of this class
      */
-    public static final int Y_DIMENSION = 1;
+    public static final int AXIS_Y = 1;
     /**
-     * The index of the channel dimension of accessibles returned by functions of this class
+     * The index of the channel axis of accessibles returned by functions of this class
      */
-    public static final int CHANNEL_DIMENSION = 2;
+    public static final int AXIS_CHANNEL = 2;
     /**
-     * The index of the Z dimension of accessibles returned by functions of this class
+     * The index of the Z axis of accessibles returned by functions of this class
      */
-    public static final int Z_DIMENSION = 3;
+    public static final int AXIS_Z = 3;
     /**
-     * The index of the time dimension of accessibles returned by functions of this class
+     * The index of the time axis of accessibles returned by functions of this class
      */
-    public static final int TIME_DIMENSION = 4;
+    public static final int AXIS_TIME = 4;
     private final ImageServer<BufferedImage> server;
     private final T type;
     private final CellCache cellCache;
@@ -159,7 +159,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * The {@link Img} returned by this class is immutable. This means that any attempt to write data to it will result in an
      * {@link UnsupportedOperationException}.
      * <p>
-     * See {@link #X_DIMENSION}, {@link #Y_DIMENSION}, {@link #CHANNEL_DIMENSION}, {@link #Z_DIMENSION}, and {@link #TIME_DIMENSION} to get the physical
+     * See {@link #AXIS_X}, {@link #AXIS_Y}, {@link #AXIS_CHANNEL}, {@link #AXIS_Z}, and {@link #AXIS_TIME} to get the physical
      * interpretation of the dimensions of the returned {@link Img}.
      * <p>
      * Pixels of the returned image are lazily fetched.
@@ -207,7 +207,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * The {@link RandomAccessibleInterval} returned by this class is immutable. This means that any attempt to write data to it will result in an
      * {@link UnsupportedOperationException}.
      * <p>
-     * See {@link #X_DIMENSION}, {@link #Y_DIMENSION}, {@link #CHANNEL_DIMENSION}, {@link #Z_DIMENSION}, and {@link #TIME_DIMENSION} to get the physical
+     * See {@link #AXIS_X}, {@link #AXIS_Y}, {@link #AXIS_CHANNEL}, {@link #AXIS_Z}, and {@link #AXIS_TIME} to get the physical
      * interpretation of the dimensions of the returned {@link RandomAccessibleInterval}.
      * <p>
      * Values of the returned image are lazily fetched.

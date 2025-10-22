@@ -160,7 +160,7 @@ public class TestImgCreator {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getWidth();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.X_DIMENSION;
+        int dimensionIndex = ImgCreator.AXIS_X;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -172,7 +172,7 @@ public class TestImgCreator {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getHeight();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.Y_DIMENSION;
+        int dimensionIndex = ImgCreator.AXIS_Y;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -184,7 +184,7 @@ public class TestImgCreator {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.nChannels();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.CHANNEL_DIMENSION;
+        int dimensionIndex = ImgCreator.AXIS_CHANNEL;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -196,7 +196,7 @@ public class TestImgCreator {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getMetadata().getSizeZ();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.Z_DIMENSION;
+        int dimensionIndex = ImgCreator.AXIS_Z;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 
@@ -208,7 +208,7 @@ public class TestImgCreator {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getMetadata().getSizeT();
         Img<?> img = ImgCreator.builder(imageServer).build().createForLevel(0);
-        int dimensionIndex = ImgCreator.TIME_DIMENSION;
+        int dimensionIndex = ImgCreator.AXIS_TIME;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
 

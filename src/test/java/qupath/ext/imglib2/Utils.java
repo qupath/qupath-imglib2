@@ -53,11 +53,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.X_DIMENSION] * downsample),
-                            (int) (position[ImgCreator.Y_DIMENSION] * downsample),
-                            position[ImgCreator.CHANNEL_DIMENSION],
-                            position[ImgCreator.Z_DIMENSION],
-                            position[ImgCreator.TIME_DIMENSION]
+                            (int) (position[ImgCreator.AXIS_X] * downsample),
+                            (int) (position[ImgCreator.AXIS_Y] * downsample),
+                            position[ImgCreator.AXIS_CHANNEL],
+                            position[ImgCreator.AXIS_Z],
+                            position[ImgCreator.AXIS_TIME]
                     ),
                     pixel.getRealDouble()
             );
@@ -74,11 +74,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.X_DIMENSION] * downsample),
-                            (int) (position[ImgCreator.Y_DIMENSION] * downsample),
-                            position[ImgCreator.CHANNEL_DIMENSION],
-                            position[ImgCreator.Z_DIMENSION],
-                            position[ImgCreator.TIME_DIMENSION]
+                            (int) (position[ImgCreator.AXIS_X] * downsample),
+                            (int) (position[ImgCreator.AXIS_Y] * downsample),
+                            position[ImgCreator.AXIS_CHANNEL],
+                            position[ImgCreator.AXIS_Z],
+                            position[ImgCreator.AXIS_TIME]
                     ),
                     pixel.get()
             );
