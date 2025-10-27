@@ -67,6 +67,10 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * The index of the time axis of accessibles returned by functions of this class
      */
     public static final int AXIS_TIME = 4;
+    /**
+     * The number of axes of accessibles returned by functions of this class
+     */
+    public static final int NUMBER_OF_AXES = 5;
     private final ImageServer<BufferedImage> server;
     private final T type;
     private final CellCache cellCache;
