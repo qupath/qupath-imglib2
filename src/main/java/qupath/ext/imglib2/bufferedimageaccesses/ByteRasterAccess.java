@@ -1,6 +1,7 @@
 package qupath.ext.imglib2.bufferedimageaccesses;
 
 import net.imglib2.img.basictypeaccess.ByteAccess;
+import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
 import java.awt.image.DataBuffer;
@@ -12,8 +13,10 @@ import java.awt.image.Raster;
  * <p>
  * This {@link ByteAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
+ * <p>
+ * This data access is marked as volatile but always contain valid data.
  */
-public class ByteRasterAccess implements ByteAccess, SizableDataAccess {
+public class ByteRasterAccess implements ByteAccess, SizableDataAccess, VolatileAccess {
 
     private final Raster raster;
     private final DataBuffer dataBuffer;
@@ -61,5 +64,10 @@ public class ByteRasterAccess implements ByteAccess, SizableDataAccess {
     @Override
     public int getSizeBytes() {
         return size;
+    }
+
+    @Override
+    public boolean isValid() {
+        return true;
     }
 }
