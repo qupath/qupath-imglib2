@@ -1,5 +1,6 @@
 package qupath.ext.imglib2.imageserver;
 
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
@@ -12,14 +13,26 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import qupath.ext.imglib2.ImgCreator;
+import qupath.lib.color.ColorModelFactory;
 import qupath.lib.images.servers.AbstractTileableImageServer;
+import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.ImageServerBuilder;
 import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.PixelType;
 import qupath.lib.images.servers.TileRequest;
 
+import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferDouble;
+import java.awt.image.DataBufferFloat;
+import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferShort;
+import java.awt.image.DataBufferUShort;
+import java.awt.image.WritableRaster;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -27,31 +40,53 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * An {@link qupath.lib.images.servers.ImageServer} whose pixel values come from {@link RandomAccessibleInterval}.
+ *
+ * @param <T> the pixel type of the underlying {@link RandomAccessibleInterval}
+ */
 public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extends AbstractTileableImageServer {
 
     private static final AtomicInteger counter = new AtomicInteger();
     private final List<RandomAccessibleInterval<T>> accessibles;
     private final ImageServerMetadata metadata;
     private final String id;
+    private final int numberOfChannelsInAccessibles;
 
     /**
+     * Create an {@link ImgLib2ImageServer} from the provided accessibles and metadata.
+     * <p>
+     * The provided accessibles must correspond to the ones returned by functions of {@link ImgCreator}: they must have
+     * {@link ImgCreator#NUMBER_OF_AXES} dimensions, the X-axes must correspond to {@link ImgCreator#AXIS_X}, and so on.
+     * <p>
+     * All dimensions of the provided accessibles must contain {@link Integer#MAX_VALUE} pixels or less.
+     * <p>
+     * The type of the provided accessibles must be {@link ARGBType}, {@link UnsignedByteType}, {@link ByteType},
+     * {@link UnsignedShortType}, {@link ShortType}, {@link UnsignedIntType}, {@link IntType}, {@link FloatType}, or
+     * {@link DoubleType}
+     *
      * accessibles must be 5d, have same axis as in ImgCreator
      * provided metadata attributes copied except for width, height, ...
      *
-     * @param accessibles
-     * @param metadata
+     * @param accessibles one accessible for each resolution level the image server should have, from highest to lowest resolution.
+     *                    Must not be empty. Each accessible must have the same number of channels, z-stacks, and timepoints
+     * @param metadata the metadata the image server should have. The width, height, number of z-stacks, number of time points, whether
+     *                 the image is RGB, pixel type, and resolution level are not taken from this metadata but determined from the provided
+     *                 accessibles. The channels of the provided metadata must correspond with the channel axes of the provided accessibles
+     * @throws NullPointerException if one of the provided parameters is null
      * @throws NoSuchElementException if the provided list is empty
      * @throws ArithmeticException if a dimension of an accessible contain more than {@link Integer#MAX_VALUE} pixels
-     * @throws IllegalArgumentException if the accessible type is not {@link ARGBType}, {@link UnsignedByteType}, {@link ByteType},
-     * {@link UnsignedShortType}, {@link ShortType}, {@link UnsignedIntType}, {@link IntType}, {@link FloatType}, or {@link DoubleType},
-     * or if the provided accessibles do not have the same number of channels, z-stacks, or timepoints
+     * @throws IllegalArgumentException if the accessible type is not among the list mentioned above, if the provided accessibles do not
+     * have the same number of channels, z-stacks, or timepoints, if the provided accessibles have a different number of channels than what
+     * the provided metadata have (or if, when the accessibles type is {@link ARGBType}, the provided accessibles don't have one channel or
+     * the provided metadata doesn't contain the default RGB channels)
      */
     public ImgLib2ImageServer(List<RandomAccessibleInterval<T>> accessibles, ImageServerMetadata metadata) {
         checkInputs(accessibles, metadata);
 
         this.accessibles = accessibles;
 
-        T value = accessibles.getFirst().firstElement();
+        T value = accessibles.getFirst().getType();
         this.metadata = new ImageServerMetadata.Builder(metadata)
                 .width(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_X)))
                 .height(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_Y)))
@@ -74,11 +109,203 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 .build();
 
         this.id = String.valueOf(counter.incrementAndGet());
+
+        this.numberOfChannelsInAccessibles = Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL));
     }
 
     @Override
     protected BufferedImage readTile(TileRequest tileRequest) {
-        return null;
+        long[] min = new long[ImgCreator.NUMBER_OF_AXES];
+        min[ImgCreator.AXIS_X] = tileRequest.getTileX();
+        min[ImgCreator.AXIS_Y] = tileRequest.getTileY();
+        min[ImgCreator.AXIS_CHANNEL] = 0;
+        min[ImgCreator.AXIS_Z] = tileRequest.getZ();
+        min[ImgCreator.AXIS_TIME] = tileRequest.getT();
+
+        long[] max = new long[ImgCreator.NUMBER_OF_AXES];   // max is inclusive
+        max[ImgCreator.AXIS_X] = tileRequest.getTileX() + tileRequest.getTileWidth() - 1;
+        max[ImgCreator.AXIS_Y] = tileRequest.getTileY() + tileRequest.getTileHeight() - 1;
+        max[ImgCreator.AXIS_CHANNEL] = numberOfChannelsInAccessibles - 1;
+        max[ImgCreator.AXIS_Z] = tileRequest.getZ();
+        max[ImgCreator.AXIS_TIME] = tileRequest.getT();
+
+        RandomAccessibleInterval<T> tile = Views.interval(accessibles.get(tileRequest.getLevel()), min, max);
+        int xyPlaneSize = Math.toIntExact(tile.dimension(ImgCreator.AXIS_X) * tile.dimension(ImgCreator.AXIS_Y));
+        int[] position = new int[ImgCreator.NUMBER_OF_AXES];
+
+        if (isRGB()) {
+            BufferedImage image = new BufferedImage(tileRequest.getTileWidth(), tileRequest.getTileHeight(), BufferedImage.TYPE_INT_ARGB);
+
+            int[] argb = new int[xyPlaneSize];
+            Cursor<ARGBType> cursor = (Cursor<ARGBType>) tile.localizingCursor();
+            while (cursor.hasNext()) {
+                ARGBType value = cursor.next();
+
+                cursor.localize(position);
+                int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                        (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                argb[xy] = value.get();
+            }
+            image.setRGB(0, 0, image.getWidth(), image.getHeight(), argb, 0, image.getWidth());
+
+            return image;
+        } else {
+            DataBuffer dataBuffer = switch (metadata.getPixelType()) {
+                case UINT8 -> {
+                    byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<UnsignedByteType> cursor = (Cursor<UnsignedByteType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        UnsignedByteType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.getByte();
+                    }
+
+                    yield new DataBufferByte(pixels, xyPlaneSize);
+                }
+                case INT8 -> {
+                    byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<ByteType> cursor = (Cursor<ByteType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        ByteType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.getByte();
+                    }
+
+                    yield new DataBufferByte(pixels, xyPlaneSize);
+                }
+                case UINT16 -> {
+                    short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<UnsignedShortType> cursor = (Cursor<UnsignedShortType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        UnsignedShortType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.getShort();
+                    }
+
+                    yield new DataBufferUShort(pixels, xyPlaneSize);
+                }
+                case INT16 -> {
+                    short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<ShortType> cursor = (Cursor<ShortType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        ShortType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.getShort();
+                    }
+
+                    yield new DataBufferShort(pixels, xyPlaneSize);
+                }
+                case UINT32 -> {
+                    int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<UnsignedIntType> cursor = (Cursor<UnsignedIntType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        UnsignedIntType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.getInt();
+                    }
+
+                    yield new DataBufferInt(pixels, xyPlaneSize);
+                }
+                case INT32 -> {
+                    int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<IntType> cursor = (Cursor<IntType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        IntType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.getInt();
+                    }
+
+                    yield new DataBufferInt(pixels, xyPlaneSize);
+                }
+                case FLOAT32 -> {
+                    float[][] pixels = new float[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<FloatType> cursor = (Cursor<FloatType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        FloatType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.get();
+                    }
+
+                    yield new DataBufferFloat(pixels, xyPlaneSize);
+                }
+                case FLOAT64 -> {
+                    double[][] pixels = new double[numberOfChannelsInAccessibles][xyPlaneSize];
+
+                    Cursor<DoubleType> cursor = (Cursor<DoubleType>) tile.localizingCursor();
+                    while (cursor.hasNext()) {
+                        DoubleType value = cursor.next();
+
+                        cursor.localize(position);
+                        int c = position[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
+                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+
+                        pixels[c][xy] = value.get();
+                    }
+
+                    yield new DataBufferDouble(pixels, xyPlaneSize);
+                }
+            };
+
+            return new BufferedImage(
+                    ColorModelFactory.createColorModel(metadata.getPixelType(), metadata.getChannels()),
+                    WritableRaster.createWritableRaster(
+                            new BandedSampleModel(
+                                    dataBuffer.getDataType(),
+                                    tileRequest.getTileWidth(),
+                                    tileRequest.getTileHeight(),
+                                    numberOfChannelsInAccessibles
+                            ),
+                            dataBuffer,
+                            null
+                    ),
+                    false,
+                    null
+            );
+        }
     }
 
     @Override
@@ -116,6 +343,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 ));
             }
         }
+
         Map<Integer, String> axes = Map.of(
                 ImgCreator.AXIS_CHANNEL, "number of channels",
                 ImgCreator.AXIS_Z, "number of z-stacks",
@@ -135,13 +363,32 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 ));
             }
         }
-        if (accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL) != metadata.getSizeC()) {
-            throw new IllegalArgumentException(String.format(
-                    "The provided metadata contains %d channels, while the provided accessibles %s contain %s channels",
-                    metadata.getSizeC(),
-                    accessibles,
-                    accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL)
-            ));
+
+        if (accessibles.getFirst().getType() instanceof ARGBType) {
+            if (accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL) != 1) {
+                throw new IllegalArgumentException(String.format(
+                        "The provided accessibles %s have the ARGB type, but not one channel (found %d)",
+                        accessibles,
+                        accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL)
+                ));
+            }
+            if (!metadata.getChannels().equals(ImageChannel.getDefaultRGBChannels())) {
+                throw new IllegalArgumentException(String.format(
+                        "The provided accessibles %s have the ARGB type, but the provided metadata %s doesn't contain the default RGB channels (found %s)",
+                        accessibles,
+                        metadata,
+                        metadata.getChannels()
+                ));
+            }
+        } else {
+            if (accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL) != metadata.getSizeC()) {
+                throw new IllegalArgumentException(String.format(
+                        "The provided metadata contains %d channels, while the provided accessibles %s contain %s channels",
+                        metadata.getSizeC(),
+                        accessibles,
+                        accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL)
+                ));
+            }
         }
     }
 
