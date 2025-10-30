@@ -2,6 +2,9 @@ package qupath.ext.imglib2;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import org.junit.jupiter.api.Assertions;
@@ -12,6 +15,7 @@ import qupath.lib.images.servers.PixelType;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 
 public class Utils {
@@ -41,6 +45,29 @@ public class Utils {
                 false,
                 null
         );
+    }
+
+    public static <T extends RealType<T> & NativeType<T>> Img<T> createImg(long[] dimensions, double[] pixels, T type) {
+        Img<T> img = new ArrayImgFactory<>(type).create(dimensions);
+
+        Cursor<T> cursor = img.localizingCursor();
+        int[] position = new int[dimensions.length];
+        while (cursor.hasNext()) {
+            T value = cursor.next();
+
+            cursor.localize(position);
+            int index = Math.toIntExact(
+                    position[ImgCreator.AXIS_X] +
+                            position[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_X] +
+                            position[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] +
+                            position[ImgCreator.AXIS_Z] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] +
+                            position[ImgCreator.AXIS_TIME] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_Z]
+            );
+
+            value.setReal(pixels[index]);
+        }
+
+        return img;
     }
 
     public static <T extends RealType<T>> void assertRandomAccessibleEquals(RandomAccessibleInterval<T> accessible, PixelGetter pixelGetter, double downsample) {
@@ -103,6 +130,24 @@ public class Utils {
                     pixel.getRealDouble(),
                     0.0000000001        // to avoid rounding errors
             );
+        }
+    }
+
+    public static void assertBufferedImagesEqual(BufferedImage expectedImage, BufferedImage actualImage, double delta) {
+        Assertions.assertEquals(expectedImage.getWidth(), actualImage.getWidth());
+        Assertions.assertEquals(expectedImage.getHeight(), actualImage.getHeight());
+        Assertions.assertEquals(expectedImage.getRaster().getNumBands(), actualImage.getRaster().getNumBands());
+
+        for (int x = 0; x < expectedImage.getWidth(); x++) {
+            for (int y = 0; y < expectedImage.getHeight(); y++) {
+                for (int b=0; b< expectedImage.getRaster().getNumBands(); b++) {
+                    Assertions.assertEquals(
+                            expectedImage.getRaster().getSampleDouble(x, y, b),
+                            actualImage.getRaster().getSampleDouble(x, y, b),
+                            delta
+                    );
+                }
+            }
         }
     }
 }

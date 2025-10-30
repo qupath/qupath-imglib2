@@ -34,6 +34,7 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.WritableRaster;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +64,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
      * <p>
      * The type of the provided accessibles must be {@link ARGBType}, {@link UnsignedByteType}, {@link ByteType},
      * {@link UnsignedShortType}, {@link ShortType}, {@link UnsignedIntType}, {@link IntType}, {@link FloatType}, or
-     * {@link DoubleType}
-     *
-     * accessibles must be 5d, have same axis as in ImgCreator
-     * provided metadata attributes copied except for width, height, ...
+     * {@link DoubleType}.
      *
      * @param accessibles one accessible for each resolution level the image server should have, from highest to lowest resolution.
      *                    Must not be empty. Each accessible must have the same number of channels, z-stacks, and timepoints
@@ -76,17 +74,17 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
      * @throws NullPointerException if one of the provided parameters is null
      * @throws NoSuchElementException if the provided list is empty
      * @throws ArithmeticException if a dimension of an accessible contain more than {@link Integer#MAX_VALUE} pixels
-     * @throws IllegalArgumentException if the accessible type is not among the list mentioned above, if the provided accessibles do not
-     * have the same number of channels, z-stacks, or timepoints, if the provided accessibles have a different number of channels than what
-     * the provided metadata have (or if, when the accessibles type is {@link ARGBType}, the provided accessibles don't have one channel or
-     * the provided metadata doesn't contain the default RGB channels)
+     * @throws IllegalArgumentException if the accessible type is not among the list mentioned above, if the provided accessibles do not have
+     * {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles do not have the same number of channels, z-stacks, or timepoints,
+     * if the provided accessibles have a different number of channels than what the provided metadata have (or if, when the accessibles type
+     * is {@link ARGBType}, the provided accessibles don't have one channel or the provided metadata doesn't contain the default RGB channels)
      */
     public ImgLib2ImageServer(List<RandomAccessibleInterval<T>> accessibles, ImageServerMetadata metadata) {
         checkInputs(accessibles, metadata);
 
         this.accessibles = accessibles;
 
-        T value = accessibles.getFirst().getType();
+        T value = accessibles.getFirst().firstElement();
         this.metadata = new ImageServerMetadata.Builder(metadata)
                 .width(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_X)))
                 .height(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_Y)))
@@ -101,7 +99,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                     case IntType ignored -> PixelType.INT32;
                     case FloatType ignored -> PixelType.FLOAT32;
                     case DoubleType ignored -> PixelType.FLOAT64;
-                    default -> throw new IllegalStateException(String.format("Unexpected value accessible type %s", value));
+                    default -> throw new IllegalArgumentException(String.format("Unexpected accessible type %s", value));
                 })
                 .levels(createResolutionLevels(accessibles))
                 .sizeZ(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_Z)))
@@ -115,35 +113,25 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
 
     @Override
     protected BufferedImage readTile(TileRequest tileRequest) {
-        long[] min = new long[ImgCreator.NUMBER_OF_AXES];
-        min[ImgCreator.AXIS_X] = tileRequest.getTileX();
-        min[ImgCreator.AXIS_Y] = tileRequest.getTileY();
-        min[ImgCreator.AXIS_CHANNEL] = 0;
-        min[ImgCreator.AXIS_Z] = tileRequest.getZ();
-        min[ImgCreator.AXIS_TIME] = tileRequest.getT();
+        RandomAccessibleInterval<T> tile = getImgLib2Tile(tileRequest);
+        long[] minTileLong = new long[ImgCreator.NUMBER_OF_AXES];
+        tile.min(minTileLong);
+        int[] minTile = Arrays.stream(minTileLong).mapToInt(Math::toIntExact).toArray();
 
-        long[] max = new long[ImgCreator.NUMBER_OF_AXES];   // max is inclusive
-        max[ImgCreator.AXIS_X] = tileRequest.getTileX() + tileRequest.getTileWidth() - 1;
-        max[ImgCreator.AXIS_Y] = tileRequest.getTileY() + tileRequest.getTileHeight() - 1;
-        max[ImgCreator.AXIS_CHANNEL] = numberOfChannelsInAccessibles - 1;
-        max[ImgCreator.AXIS_Z] = tileRequest.getZ();
-        max[ImgCreator.AXIS_TIME] = tileRequest.getT();
-
-        RandomAccessibleInterval<T> tile = Views.interval(accessibles.get(tileRequest.getLevel()), min, max);
         int xyPlaneSize = Math.toIntExact(tile.dimension(ImgCreator.AXIS_X) * tile.dimension(ImgCreator.AXIS_Y));
         int[] position = new int[ImgCreator.NUMBER_OF_AXES];
+        Cursor<T> cursor = tile.localizingCursor();
 
         if (isRGB()) {
             BufferedImage image = new BufferedImage(tileRequest.getTileWidth(), tileRequest.getTileHeight(), BufferedImage.TYPE_INT_ARGB);
 
             int[] argb = new int[xyPlaneSize];
-            Cursor<ARGBType> cursor = (Cursor<ARGBType>) tile.localizingCursor();
             while (cursor.hasNext()) {
-                ARGBType value = cursor.next();
+                ARGBType value = (ARGBType) cursor.next();
 
                 cursor.localize(position);
-                int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                        (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                        (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                 argb[xy] = value.get();
             }
@@ -155,14 +143,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case UINT8 -> {
                     byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<UnsignedByteType> cursor = (Cursor<UnsignedByteType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        UnsignedByteType value = cursor.next();
+                        UnsignedByteType value = (UnsignedByteType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.getByte();
                     }
@@ -172,14 +159,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case INT8 -> {
                     byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<ByteType> cursor = (Cursor<ByteType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        ByteType value = cursor.next();
+                        ByteType value = (ByteType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.getByte();
                     }
@@ -189,14 +175,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case UINT16 -> {
                     short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<UnsignedShortType> cursor = (Cursor<UnsignedShortType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        UnsignedShortType value = cursor.next();
+                        UnsignedShortType value = (UnsignedShortType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.getShort();
                     }
@@ -206,14 +191,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case INT16 -> {
                     short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<ShortType> cursor = (Cursor<ShortType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        ShortType value = cursor.next();
+                        ShortType value = (ShortType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.getShort();
                     }
@@ -223,14 +207,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case UINT32 -> {
                     int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<UnsignedIntType> cursor = (Cursor<UnsignedIntType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        UnsignedIntType value = cursor.next();
+                        UnsignedIntType value = (UnsignedIntType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.getInt();
                     }
@@ -240,14 +223,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case INT32 -> {
                     int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<IntType> cursor = (Cursor<IntType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        IntType value = cursor.next();
+                        IntType value = (IntType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.getInt();
                     }
@@ -257,14 +239,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case FLOAT32 -> {
                     float[][] pixels = new float[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<FloatType> cursor = (Cursor<FloatType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        FloatType value = cursor.next();
+                        FloatType value = (FloatType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.get();
                     }
@@ -274,14 +255,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case FLOAT64 -> {
                     double[][] pixels = new double[numberOfChannelsInAccessibles][xyPlaneSize];
 
-                    Cursor<DoubleType> cursor = (Cursor<DoubleType>) tile.localizingCursor();
                     while (cursor.hasNext()) {
-                        DoubleType value = cursor.next();
+                        DoubleType value = (DoubleType) cursor.next();
 
                         cursor.localize(position);
-                        int c = position[ImgCreator.AXIS_CHANNEL];
-                        int xy = position[ImgCreator.AXIS_X] - tileRequest.getTileX() +
-                                (position[ImgCreator.AXIS_Y] - tileRequest.getTileY()) * tileRequest.getTileWidth();
+                        int c = position[ImgCreator.AXIS_CHANNEL] - minTile[ImgCreator.AXIS_CHANNEL];
+                        int xy = position[ImgCreator.AXIS_X] - minTile[ImgCreator.AXIS_X] +
+                                (position[ImgCreator.AXIS_Y] - minTile[ImgCreator.AXIS_Y]) * tileRequest.getTileWidth();
 
                         pixels[c][xy] = value.get();
                     }
@@ -406,5 +386,28 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         }
 
         return builder.build();
+    }
+
+    private RandomAccessibleInterval<T> getImgLib2Tile(TileRequest tileRequest) {
+        RandomAccessibleInterval<T> wholeLevel = accessibles.get(tileRequest.getLevel());
+
+        long[] minWholeLevel = new long[ImgCreator.NUMBER_OF_AXES];
+        wholeLevel.min(minWholeLevel);
+
+        long[] min = new long[ImgCreator.NUMBER_OF_AXES];
+        min[ImgCreator.AXIS_X] = minWholeLevel[ImgCreator.AXIS_X] + tileRequest.getTileX();
+        min[ImgCreator.AXIS_Y] = minWholeLevel[ImgCreator.AXIS_Y] + tileRequest.getTileY();
+        min[ImgCreator.AXIS_CHANNEL] = minWholeLevel[ImgCreator.AXIS_CHANNEL];
+        min[ImgCreator.AXIS_Z] = minWholeLevel[ImgCreator.AXIS_Z] + tileRequest.getZ();
+        min[ImgCreator.AXIS_TIME] = minWholeLevel[ImgCreator.AXIS_TIME] + tileRequest.getT();
+
+        long[] max = new long[ImgCreator.NUMBER_OF_AXES];   // max is inclusive, hence the -1
+        max[ImgCreator.AXIS_X] = min[ImgCreator.AXIS_X] + tileRequest.getTileWidth() - 1;
+        max[ImgCreator.AXIS_Y] = min[ImgCreator.AXIS_Y] + tileRequest.getTileHeight() - 1;
+        max[ImgCreator.AXIS_CHANNEL] = min[ImgCreator.AXIS_CHANNEL] + numberOfChannelsInAccessibles - 1;
+        max[ImgCreator.AXIS_Z] = min[ImgCreator.AXIS_Z];
+        max[ImgCreator.AXIS_TIME] = min[ImgCreator.AXIS_TIME];
+
+        return Views.interval(wholeLevel, min, max);
     }
 }
