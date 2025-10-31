@@ -1,6 +1,7 @@
 package qupath.ext.imglib2.bufferedimageaccesses;
 
 import net.imglib2.img.basictypeaccess.IntAccess;
+import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
 import java.awt.image.BufferedImage;
@@ -13,8 +14,10 @@ import java.awt.image.SinglePixelPackedSampleModel;
  * <p>
  * This {@link IntAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
+ * <p>
+ * This data access is marked as volatile but always contain valid data.
  */
-public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess {
+public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess, VolatileAccess {
 
     private final BufferedImage image;
     private final DataBuffer dataBuffer;
@@ -62,5 +65,10 @@ public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess {
     @Override
     public int getSizeBytes() {
         return size;
+    }
+
+    @Override
+    public boolean isValid() {
+        return true;
     }
 }
