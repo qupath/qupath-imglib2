@@ -313,6 +313,11 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         return metadata;
     }
 
+    @Override
+    protected BufferedImage createDefaultRGBImage(int width, int height) {
+        return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    }
+
     private static <T extends NativeType<T> & NumericType<T>> void checkInputs(List<RandomAccessibleInterval<T>> accessibles, ImageServerMetadata metadata) {
         for (RandomAccessibleInterval<T> accessible: accessibles) {
             if (accessible.numDimensions() != ImgCreator.NUMBER_OF_AXES) {

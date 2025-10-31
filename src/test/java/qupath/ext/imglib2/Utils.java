@@ -9,13 +9,13 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import org.junit.jupiter.api.Assertions;
 import qupath.lib.color.ColorModelFactory;
+import qupath.lib.common.ColorTools;
 import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.PixelType;
 
 import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 
 public class Utils {
@@ -47,7 +47,13 @@ public class Utils {
         );
     }
 
-    public static <T extends RealType<T> & NativeType<T>> Img<T> createImg(long[] dimensions, double[] pixels, T type) {
+    public static BufferedImage createArgbBufferedImage(int width, int height, int[] argb) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        image.setRGB(0, 0, width, height, argb, 0, width);
+        return image;
+    }
+
+    public static <T extends NativeType<T> & RealType<T>> Img<T> createImg(long[] dimensions, double[] pixels, T type) {
         Img<T> img = new ArrayImgFactory<>(type).create(dimensions);
 
         Cursor<T> cursor = img.localizingCursor();
@@ -65,6 +71,29 @@ public class Utils {
             );
 
             value.setReal(pixels[index]);
+        }
+
+        return img;
+    }
+
+    public static Img<ARGBType> createArgbImg(long[] dimensions, int[] pixels) {
+        Img<ARGBType> img = new ArrayImgFactory<>(new ARGBType()).create(dimensions);
+
+        Cursor<ARGBType> cursor = img.localizingCursor();
+        int[] position = new int[dimensions.length];
+        while (cursor.hasNext()) {
+            ARGBType value = cursor.next();
+
+            cursor.localize(position);
+            int index = Math.toIntExact(
+                    position[ImgCreator.AXIS_X] +
+                            position[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_X] +
+                            position[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] +
+                            position[ImgCreator.AXIS_Z] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] +
+                            position[ImgCreator.AXIS_TIME] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_Z]
+            );
+
+            value.set(pixels[index]);
         }
 
         return img;
@@ -136,16 +165,46 @@ public class Utils {
     public static void assertBufferedImagesEqual(BufferedImage expectedImage, BufferedImage actualImage, double delta) {
         Assertions.assertEquals(expectedImage.getWidth(), actualImage.getWidth());
         Assertions.assertEquals(expectedImage.getHeight(), actualImage.getHeight());
-        Assertions.assertEquals(expectedImage.getRaster().getNumBands(), actualImage.getRaster().getNumBands());
 
-        for (int x = 0; x < expectedImage.getWidth(); x++) {
-            for (int y = 0; y < expectedImage.getHeight(); y++) {
-                for (int b=0; b< expectedImage.getRaster().getNumBands(); b++) {
-                    Assertions.assertEquals(
-                            expectedImage.getRaster().getSampleDouble(x, y, b),
-                            actualImage.getRaster().getSampleDouble(x, y, b),
-                            delta
-                    );
+        if (expectedImage.getType() == BufferedImage.TYPE_INT_ARGB && actualImage.getType() == BufferedImage.TYPE_INT_ARGB) {
+            int[] expectedRgb = expectedImage.getRGB(
+                    0,
+                    0,
+                    expectedImage.getWidth(),
+                    expectedImage.getHeight(),
+                    null,
+                    0,
+                    expectedImage.getWidth()
+            );
+            int[] actualRgb = actualImage.getRGB(
+                    0,
+                    0,
+                    actualImage.getWidth(),
+                    actualImage.getHeight(),
+                    null,
+                    0,
+                    actualImage.getWidth()
+            );
+
+            for (int i=0; i<expectedRgb.length; i++) {
+                // some mismatch may occur due to interpolation in AbstractTileableImageServer, hence the delta of 1
+                Assertions.assertEquals(ColorTools.alpha(expectedRgb[i]), ColorTools.alpha(actualRgb[i]));
+                Assertions.assertEquals(ColorTools.red(expectedRgb[i]), ColorTools.red(actualRgb[i]), 1);
+                Assertions.assertEquals(ColorTools.green(expectedRgb[i]), ColorTools.green(actualRgb[i]));
+                Assertions.assertEquals(ColorTools.blue(expectedRgb[i]), ColorTools.blue(actualRgb[i]));
+            }
+        } else {
+            Assertions.assertEquals(expectedImage.getRaster().getNumBands(), actualImage.getRaster().getNumBands());
+
+            for (int x = 0; x < expectedImage.getWidth(); x++) {
+                for (int y = 0; y < expectedImage.getHeight(); y++) {
+                    for (int b=0; b< expectedImage.getRaster().getNumBands(); b++) {
+                        Assertions.assertEquals(
+                                expectedImage.getRaster().getSampleDouble(x, y, b),
+                                actualImage.getRaster().getSampleDouble(x, y, b),
+                                delta
+                        );
+                    }
                 }
             }
         }

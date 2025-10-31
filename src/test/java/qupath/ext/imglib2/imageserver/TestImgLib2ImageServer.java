@@ -6,14 +6,24 @@ import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.cell.Cell;
 import net.imglib2.img.cell.CellGrid;
 import net.imglib2.img.cell.LazyCellImg;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.ByteType;
+import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.integer.ShortType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedIntType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import qupath.ext.imglib2.Utils;
+import qupath.lib.common.ColorTools;
 import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
@@ -22,12 +32,16 @@ import qupath.lib.objects.classes.PathClass;
 import qupath.lib.regions.RegionRequest;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferDouble;
+import java.awt.image.DataBufferFloat;
+import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferShort;
+import java.awt.image.DataBufferUShort;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 public class TestImgLib2ImageServer {
@@ -292,175 +306,1071 @@ public class TestImgLib2ImageServer {
         server.close();
     }
 
-    @Test
-    void Check_Full_Resolution_Pixels_On_Float_Image() throws Exception {
-        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
-                Utils.createImg(
-                        new long[] {2, 2, 1, 1, 2},
-                        new double[] {
-                                23, -23.4,
-                                .4, 3,
+    abstract static class GenericImage<T extends NativeType<T> & NumericType<T>> {
 
-                                75, 7.6,
-                                0, -1
-                        },
-                        new FloatType()
-                ),
-                Utils.createImg(
-                        new long[] {1, 1, 1, 1, 2},
-                        new double[] {
-                                45.4,
+        @Test
+        void Check_Full_Resolution_Pixels() throws Exception {
+            List<RandomAccessibleInterval<T>> accessibles = getAccessibles();
+            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
+                    .width(100)
+                    .height(200)
+                    .channels(getChannels())
+                    .build();
+            BufferedImage expectedImage = getExpectedFullResolutionImage();
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
 
-                                -1.3
-                        },
-                        new FloatType()
-                )
-        );
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(100)
-                .height(200)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
-        BufferedImage expectedImage = Utils.createBufferedImage(
-                new DataBufferDouble(new double[][] { new double[] {
-                        75, 7.6,
-                        0, -1
-                }}, 4),
-                2,
-                2,
-                1,
-                PixelType.FLOAT32
-        );
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+            BufferedImage image = server.readRegion(RegionRequest.createInstance(server).updateT(1));
 
-        BufferedImage image = server.readRegion(RegionRequest.createInstance(server).updateT(1));
+            Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
 
-        Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
+            server.close();
+        }
 
-        server.close();
+        @Test
+        void Check_Lowest_Resolution_Pixels() throws Exception {
+            List<RandomAccessibleInterval<T>> accessibles = getAccessibles();
+            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
+                    .width(100)
+                    .height(200)
+                    .channels(getChannels())
+                    .build();
+            BufferedImage expectedImage = getExpectedLowestResolutionImage();
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+
+            BufferedImage image = server.readRegion(RegionRequest.createInstance(server, 2));
+
+            Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
+
+            server.close();
+        }
+
+        @Test
+        void Check_Pixels_On_View() throws Exception {
+            List<RandomAccessibleInterval<T>> accessibles = List.of(Views.interval(
+                    getAccessibles().getFirst(),
+                    new long[] {1, 0, 0, 0, 1},
+                    new long[] {1, 1, 0, 0, 1}
+            ));
+            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
+                    .width(100)
+                    .height(200)
+                    .channels(getChannels())
+                    .build();
+            BufferedImage expectedImage = getExpectedViewOfImage();
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+
+            BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
+
+            Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
+
+            server.close();
+        }
+
+        @Test
+        void Check_Pixels_On_Big_Image() throws Exception {
+            List<RandomAccessibleInterval<T>> accessibles = getBigAccessibles();
+            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
+                    .width(1)
+                    .height(1)
+                    .channels(getChannels())
+                    .preferredTileSize(75, 75)
+                    .build();
+            BufferedImage expectedImage = getExpectedBigImage();
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+
+            BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
+
+            Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
+
+            server.close();
+        }
+
+        abstract protected List<RandomAccessibleInterval<T>> getAccessibles();
+
+        abstract protected List<RandomAccessibleInterval<T>> getBigAccessibles();
+
+        abstract protected List<ImageChannel> getChannels();
+
+        abstract protected BufferedImage getExpectedFullResolutionImage();
+
+        abstract protected BufferedImage getExpectedLowestResolutionImage();
+
+        abstract protected BufferedImage getExpectedViewOfImage();
+
+        abstract protected BufferedImage getExpectedBigImage();
     }
 
-    @Test
-    void Check_Lowest_Resolution_Pixels_On_Float_Image() throws Exception {
-        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
-                Utils.createImg(
-                        new long[] {2, 2, 1, 1, 2},
-                        new double[] {
-                                23, -23.4,
-                                .4, 3,
+    @Nested
+    class ArgbImage extends GenericImage<ARGBType> {
 
-                                75, 7.6,
-                                0, -1
-                        },
-                        new FloatType()
-                ),
-                Utils.createImg(
-                        new long[] {1, 1, 1, 1, 2},
-                        new double[] {
-                                45.4,
+        @Override
+        protected List<RandomAccessibleInterval<ARGBType>> getAccessibles() {
+            return List.of(
+                    Utils.createArgbImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new int[] {
+                                    ColorTools.packARGB(43, 65, 33, 0), ColorTools.packARGB(45, 5, 133, 255),
+                                    ColorTools.packARGB(37, 5, 223, 2), ColorTools.packARGB(4, 33, 66, 87),
 
-                                -1.3
-                        },
-                        new FloatType()
-                )
-        );
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(100)
-                .height(200)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
-        BufferedImage expectedImage = Utils.createBufferedImage(
-                new DataBufferDouble(new double[][] { new double[] {
-                        45.4
-                }}, 4),
-                1,
-                1,
-                1,
-                PixelType.FLOAT32
-        );
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+                                    ColorTools.packARGB(43, 65, 33, 0), ColorTools.packARGB(45, 5, 133, 255),
+                                    ColorTools.packARGB(37, 5, 223, 2), ColorTools.packARGB(4, 33, 66, 87)
+                            }
+                    ),
+                    Utils.createArgbImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new int[] {
+                                    ColorTools.packARGB(32, 165, 233, 30),
 
-        BufferedImage image = server.readRegion(RegionRequest.createInstance(server, 2));
+                                    ColorTools.packARGB(3, 16, 255, 3)
+                            }
+                    )
+            );
+        }
 
-        Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
+        @Override
+        protected List<RandomAccessibleInterval<ARGBType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
 
-        server.close();
+            return List.of(Utils.createArgbImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .map(i -> ColorTools.packARGB(120, i % 255, 0, 255))
+                            .toArray()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return ImageChannel.getDefaultRGBChannels();
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createArgbBufferedImage(
+                    2,
+                    2,
+                    new int[] {
+                            ColorTools.packARGB(43, 65, 33, 0), ColorTools.packARGB(45, 5, 133, 255),
+                            ColorTools.packARGB(37, 5, 223, 2), ColorTools.packARGB(4, 33, 66, 87)
+                    }
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createArgbBufferedImage(
+                    1,
+                    1,
+                    new int[] {
+                            ColorTools.packARGB(32, 165, 233, 30)
+                    }
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createArgbBufferedImage(
+                    1,
+                    2,
+                    new int[] {
+                            ColorTools.packARGB(45, 5, 133, 255),
+                            ColorTools.packARGB(4, 33, 66, 87)
+                    }
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+
+            return Utils.createArgbBufferedImage(
+                    width,
+                    height,
+                    IntStream.range(0, width * height)
+                            .map(i -> ColorTools.packARGB(120, i % 255, 0, 255))
+                            .toArray()
+            );
+        }
     }
 
-    @Test
-    void Check_Pixels_On_View_Of_Float_Image() throws Exception {
-        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(Views.interval(
-                Utils.createImg(
-                        new long[] {2, 2, 1, 1, 2},
-                        new double[] {
-                                23, -23.4,
-                                .4, 3,
+    @Nested
+    class Uint8Image extends GenericImage<UnsignedByteType> {
 
-                                75, 7.6,
-                                0, -1
-                        },
-                        new FloatType()
-                ),
-                new long[] {1, 0, 0, 0, 1},
-                new long[] {1, 1, 0, 0, 1}
-        ));
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(100)
-                .height(200)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
-        BufferedImage expectedImage = Utils.createBufferedImage(
-                new DataBufferDouble(new double[][] { new double[] {
-                        7.6,
-                        -1
-                }}, 4),
-                1,
-                2,
-                1,
-                PixelType.FLOAT32
-        );
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+        @Override
+        protected List<RandomAccessibleInterval<UnsignedByteType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, 23,
+                                    4, 3,
 
-        BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
+                                    75, 7,
+                                    0, 1
+                            },
+                            new UnsignedByteType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45,
 
-        Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
+                                    3
+                            },
+                            new UnsignedByteType()
+                    )
+            );
+        }
 
-        server.close();
+        @Override
+        protected List<RandomAccessibleInterval<UnsignedByteType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i % 255)
+                            .toArray(),
+                    new UnsignedByteType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferByte(new byte[][] { new byte[] {
+                            75, 7,
+                            0, 1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.UINT8
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferByte(new byte[][] { new byte[] {
+                            45
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.UINT8
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferByte(new byte[][] { new byte[] {
+                            7,
+                            1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.UINT8
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+            byte[] pixels = new byte[width * height];
+            for (int i=0; i<pixels.length; i++) {
+                pixels[i] = (byte) (i % 255);
+            }
+
+            return Utils.createBufferedImage(
+                    new DataBufferByte(
+                            new byte[][] { pixels },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.UINT8
+            );
+        }
     }
 
-    @Test
-    void Check_Pixels_On_Big_Float_Image() throws Exception {
-        int width = 1000;
-        int height = 1000;
-        double[] pixels = IntStream.range(0, width * height)
-                .mapToDouble(i -> i)
-                .toArray();
-        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
-                Utils.createImg(
-                        new long[] {width, height, 1, 1, 1},
-                        pixels,
-                        new FloatType()
-                )
-        );
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .preferredTileSize(300, 300)
-                .build();
-        BufferedImage expectedImage = Utils.createBufferedImage(
-                new DataBufferDouble(new double[][] { pixels}, width*height),
-                width,
-                height,
-                1,
-                PixelType.FLOAT32
-        );
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+    @Nested
+    class Int8Image extends GenericImage<ByteType> {
 
-        BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
+        @Override
+        protected List<RandomAccessibleInterval<ByteType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, -23,
+                                    4, 3,
 
-        Utils.assertBufferedImagesEqual(expectedImage, image, 0.00001);
+                                    75, 7,
+                                    0, -1
+                            },
+                            new ByteType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45,
 
-        server.close();
+                                    -3
+                            },
+                            new ByteType()
+                    )
+            );
+        }
+
+        @Override
+        protected List<RandomAccessibleInterval<ByteType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i % 255 - 128)
+                            .toArray(),
+                    new ByteType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferByte(new byte[][] { new byte[] {
+                            75, 7,
+                            0, -1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.INT8
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferByte(new byte[][] { new byte[] {
+                            45
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.INT8
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferByte(new byte[][] { new byte[] {
+                            7,
+                            -1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.INT8
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+            byte[] pixels = new byte[width * height];
+            for (int i=0; i<pixels.length; i++) {
+                pixels[i] = (byte) (i % 255 - 128);
+            }
+
+            return Utils.createBufferedImage(
+                    new DataBufferByte(
+                            new byte[][] { pixels },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.INT8
+            );
+        }
+    }
+
+    @Nested
+    class Uint16Image extends GenericImage<UnsignedShortType> {
+
+        @Override
+        protected List<RandomAccessibleInterval<UnsignedShortType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, 23,
+                                    4, 3,
+
+                                    75, 7,
+                                    0, 1
+                            },
+                            new UnsignedShortType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45,
+
+                                    3
+                            },
+                            new UnsignedShortType()
+                    )
+            );
+        }
+
+        @Override
+        protected List<RandomAccessibleInterval<UnsignedShortType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i)
+                            .toArray(),
+                    new UnsignedShortType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferUShort(new short[][] { new short[] {
+                            75, 7,
+                            0, 1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.UINT16
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferUShort(new short[][] { new short[] {
+                            45
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.UINT16
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferUShort(new short[][] { new short[] {
+                            7,
+                            1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.UINT16
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+            short[] pixels = new short[width * height];
+            for (int i=0; i<pixels.length; i++) {
+                pixels[i] = (short) i;
+            }
+
+            return Utils.createBufferedImage(
+                    new DataBufferUShort(
+                            new short[][] { pixels },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.UINT16
+            );
+        }
+    }
+
+    @Nested
+    class Int16Image extends GenericImage<ShortType> {
+
+        @Override
+        protected List<RandomAccessibleInterval<ShortType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, -23,
+                                    4, 3,
+
+                                    75, 7,
+                                    0, -1
+                            },
+                            new ShortType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45,
+
+                                    -3
+                            },
+                            new ShortType()
+                    )
+            );
+        }
+
+        @Override
+        protected List<RandomAccessibleInterval<ShortType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i)
+                            .toArray(),
+                    new ShortType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferShort(new short[][] { new short[] {
+                            75, 7,
+                            0, -1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.INT16
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferShort(new short[][] { new short[] {
+                            45
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.INT16
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferShort(new short[][] { new short[] {
+                            7,
+                            -1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.INT16
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+            short[] pixels = new short[width * height];
+            for (int i=0; i<pixels.length; i++) {
+                pixels[i] = (short) i;
+            }
+
+            return Utils.createBufferedImage(
+                    new DataBufferShort(
+                            new short[][] { pixels },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.INT16
+            );
+        }
+    }
+
+    @Nested
+    class Uint32Image extends GenericImage<UnsignedIntType> {
+
+        @Override
+        protected List<RandomAccessibleInterval<UnsignedIntType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, 23,
+                                    4, 3,
+
+                                    75, 7,
+                                    0, 1
+                            },
+                            new UnsignedIntType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45,
+
+                                    3
+                            },
+                            new UnsignedIntType()
+                    )
+            );
+        }
+
+        @Override
+        protected List<RandomAccessibleInterval<UnsignedIntType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i)
+                            .toArray(),
+                    new UnsignedIntType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferInt(new int[][] { new int[] {
+                            75, 7,
+                            0, 1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.UINT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferInt(new int[][] { new int[] {
+                            45
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.UINT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferInt(new int[][] { new int[] {
+                            7,
+                            1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.UINT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+
+            return Utils.createBufferedImage(
+                    new DataBufferInt(
+                            new int[][] { IntStream.range(0, width * height).toArray() },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.UINT32
+            );
+        }
+    }
+
+    @Nested
+    class Int32Image extends GenericImage<IntType> {
+
+        @Override
+        protected List<RandomAccessibleInterval<IntType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, -23,
+                                    4, 3,
+
+                                    75, 7,
+                                    0, -1
+                            },
+                            new IntType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45,
+
+                                    -3
+                            },
+                            new IntType()
+                    )
+            );
+        }
+
+        @Override
+        protected List<RandomAccessibleInterval<IntType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i)
+                            .toArray(),
+                    new IntType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferInt(new int[][] { new int[] {
+                            75, 7,
+                            0, -1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.INT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferInt(new int[][] { new int[] {
+                            45
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.INT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferInt(new int[][] { new int[] {
+                            7,
+                            -1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.INT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+
+            return Utils.createBufferedImage(
+                    new DataBufferInt(
+                            new int[][] { IntStream.range(0, width * height).toArray() },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.INT32
+            );
+        }
+    }
+
+    @Nested
+    class FloatImage extends GenericImage<FloatType> {
+
+        @Override
+        protected List<RandomAccessibleInterval<FloatType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, -23.4,
+                                    .4, 3,
+
+                                    75, 7.6,
+                                    0, -1
+                            },
+                            new FloatType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45.4,
+
+                                    -1.3
+                            },
+                            new FloatType()
+                    )
+            );
+        }
+
+        @Override
+        protected List<RandomAccessibleInterval<FloatType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i)
+                            .toArray(),
+                    new FloatType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferFloat(new float[][] { new float[] {
+                            75, 7.6f,
+                            0, -1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.FLOAT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferFloat(new float[][] { new float[] {
+                            45.4f
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.FLOAT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferFloat(new float[][] { new float[] {
+                            7.6f,
+                            -1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.FLOAT32
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+            float[] pixels = new float[width * height];
+            for (int i=0; i<pixels.length; i++) {
+                pixels[i] = i;
+            }
+
+            return Utils.createBufferedImage(
+                    new DataBufferFloat(
+                            new float[][] { pixels },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.FLOAT32
+            );
+        }
+    }
+
+    @Nested
+    class DoubleImage extends GenericImage<DoubleType> {
+
+        @Override
+        protected List<RandomAccessibleInterval<DoubleType>> getAccessibles() {
+            return List.of(
+                    Utils.createImg(
+                            new long[] {2, 2, 1, 1, 2},
+                            new double[] {
+                                    23, -23.4,
+                                    .4, 3,
+
+                                    75, 7.6,
+                                    0, -1
+                            },
+                            new DoubleType()
+                    ),
+                    Utils.createImg(
+                            new long[] {1, 1, 1, 1, 2},
+                            new double[] {
+                                    45.4,
+
+                                    -1.3
+                            },
+                            new DoubleType()
+                    )
+            );
+        }
+
+        @Override
+        protected List<RandomAccessibleInterval<DoubleType>> getBigAccessibles() {
+            int width = 1000;
+            int height = 1000;
+
+            return List.of(Utils.createImg(
+                    new long[] {width, height, 1, 1, 1},
+                    IntStream.range(0, width * height)
+                            .mapToDouble(i -> i)
+                            .toArray(),
+                    new DoubleType()
+            ));
+        }
+
+        @Override
+        protected List<ImageChannel> getChannels() {
+            return List.of(ImageChannel.getInstance("Channel", 0));
+        }
+
+        @Override
+        protected BufferedImage getExpectedFullResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferDouble(new double[][] { new double[] {
+                            75, 7.6,
+                            0, -1
+                    }}, 4),
+                    2,
+                    2,
+                    1,
+                    PixelType.FLOAT64
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedLowestResolutionImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferDouble(new double[][] { new double[] {
+                            45.4
+                    }}, 4),
+                    1,
+                    1,
+                    1,
+                    PixelType.FLOAT64
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedViewOfImage() {
+            return Utils.createBufferedImage(
+                    new DataBufferDouble(new double[][] { new double[] {
+                            7.6,
+                            -1
+                    }}, 4),
+                    1,
+                    2,
+                    1,
+                    PixelType.FLOAT64
+            );
+        }
+
+        @Override
+        protected BufferedImage getExpectedBigImage() {
+            int width = 1000;
+            int height = 1000;
+
+            return Utils.createBufferedImage(
+                    new DataBufferDouble(
+                            new double[][] { IntStream.range(0, width * height)
+                                    .mapToDouble(i -> i)
+                                    .toArray()
+                            },
+                            width*height
+                    ),
+                    width,
+                    height,
+                    1,
+                    PixelType.FLOAT64
+            );
+        }
     }
 }
