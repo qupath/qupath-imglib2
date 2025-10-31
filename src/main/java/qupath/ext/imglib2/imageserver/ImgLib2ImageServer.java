@@ -349,7 +349,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
             }
         }
 
-        if (accessibles.getFirst().getType() instanceof ARGBType) {
+        if (accessibles.getFirst().firstElement() instanceof ARGBType) {
             if (accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL) != 1) {
                 throw new IllegalArgumentException(String.format(
                         "The provided accessibles %s have the ARGB type, but not one channel (found %d)",
