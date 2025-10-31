@@ -9,7 +9,6 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import org.junit.jupiter.api.Assertions;
 import qupath.lib.color.ColorModelFactory;
-import qupath.lib.common.ColorTools;
 import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.PixelType;
 
@@ -188,10 +187,10 @@ public class Utils {
 
             for (int i=0; i<expectedRgb.length; i++) {
                 // some mismatch may occur due to interpolation in AbstractTileableImageServer, hence the delta of 1
-                Assertions.assertEquals(ColorTools.alpha(expectedRgb[i]), ColorTools.alpha(actualRgb[i]));
-                Assertions.assertEquals(ColorTools.red(expectedRgb[i]), ColorTools.red(actualRgb[i]), 1);
-                Assertions.assertEquals(ColorTools.green(expectedRgb[i]), ColorTools.green(actualRgb[i]));
-                Assertions.assertEquals(ColorTools.blue(expectedRgb[i]), ColorTools.blue(actualRgb[i]));
+                Assertions.assertEquals(ARGBType.alpha(expectedRgb[i]), ARGBType.alpha(actualRgb[i]));
+                Assertions.assertEquals(ARGBType.red(expectedRgb[i]), ARGBType.red(actualRgb[i]), 1);
+                Assertions.assertEquals(ARGBType.green(expectedRgb[i]), ARGBType.green(actualRgb[i]));
+                Assertions.assertEquals(ARGBType.blue(expectedRgb[i]), ARGBType.blue(actualRgb[i]));
             }
         } else {
             Assertions.assertEquals(expectedImage.getRaster().getNumBands(), actualImage.getRaster().getNumBands());

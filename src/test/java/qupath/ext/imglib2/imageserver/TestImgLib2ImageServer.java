@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import qupath.ext.imglib2.Utils;
-import qupath.lib.common.ColorTools;
 import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
@@ -409,19 +408,19 @@ public class TestImgLib2ImageServer {
                     Utils.createArgbImg(
                             new long[] {2, 2, 1, 1, 2},
                             new int[] {
-                                    ColorTools.packARGB(43, 65, 33, 0), ColorTools.packARGB(45, 5, 133, 255),
-                                    ColorTools.packARGB(37, 5, 223, 2), ColorTools.packARGB(4, 33, 66, 87),
+                                    ARGBType.rgba(43, 65, 33, 0), ARGBType.rgba(45, 5, 133, 255),
+                                    ARGBType.rgba(37, 5, 223, 2), ARGBType.rgba(4, 33, 66, 87),
 
-                                    ColorTools.packARGB(43, 65, 33, 0), ColorTools.packARGB(45, 5, 133, 255),
-                                    ColorTools.packARGB(37, 5, 223, 2), ColorTools.packARGB(4, 33, 66, 87)
+                                    ARGBType.rgba(43, 65, 33, 0), ARGBType.rgba(45, 5, 133, 255),
+                                    ARGBType.rgba(37, 5, 223, 2), ARGBType.rgba(4, 33, 66, 87)
                             }
                     ),
                     Utils.createArgbImg(
                             new long[] {1, 1, 1, 1, 2},
                             new int[] {
-                                    ColorTools.packARGB(32, 165, 233, 30),
+                                    ARGBType.rgba(32, 165, 233, 30),
 
-                                    ColorTools.packARGB(3, 16, 255, 3)
+                                    ARGBType.rgba(3, 16, 255, 3)
                             }
                     )
             );
@@ -435,7 +434,7 @@ public class TestImgLib2ImageServer {
             return List.of(Utils.createArgbImg(
                     new long[] {width, height, 1, 1, 1},
                     IntStream.range(0, width * height)
-                            .map(i -> ColorTools.packARGB(120, i % 255, 0, 255))
+                            .map(i -> ARGBType.rgba(120, i % 255, 0, 255))
                             .toArray()
             ));
         }
@@ -451,8 +450,8 @@ public class TestImgLib2ImageServer {
                     2,
                     2,
                     new int[] {
-                            ColorTools.packARGB(43, 65, 33, 0), ColorTools.packARGB(45, 5, 133, 255),
-                            ColorTools.packARGB(37, 5, 223, 2), ColorTools.packARGB(4, 33, 66, 87)
+                            ARGBType.rgba(43, 65, 33, 0), ARGBType.rgba(45, 5, 133, 255),
+                            ARGBType.rgba(37, 5, 223, 2), ARGBType.rgba(4, 33, 66, 87)
                     }
             );
         }
@@ -463,7 +462,7 @@ public class TestImgLib2ImageServer {
                     1,
                     1,
                     new int[] {
-                            ColorTools.packARGB(32, 165, 233, 30)
+                            ARGBType.rgba(32, 165, 233, 30)
                     }
             );
         }
@@ -474,8 +473,8 @@ public class TestImgLib2ImageServer {
                     1,
                     2,
                     new int[] {
-                            ColorTools.packARGB(45, 5, 133, 255),
-                            ColorTools.packARGB(4, 33, 66, 87)
+                            ARGBType.rgba(45, 5, 133, 255),
+                            ARGBType.rgba(4, 33, 66, 87)
                     }
             );
         }
@@ -489,7 +488,7 @@ public class TestImgLib2ImageServer {
                     width,
                     height,
                     IntStream.range(0, width * height)
-                            .map(i -> ColorTools.packARGB(120, i % 255, 0, 255))
+                            .map(i -> ARGBType.rgba(120, i % 255, 0, 255))
                             .toArray()
             );
         }
