@@ -54,8 +54,6 @@ println pixel
 
 
 // It is also possible to create an ImageServer from a RandomAccessible or Img.
-// The first parameter is a list of RandomAccessible to include (one for each resolution level)
-// and the second parameter is some metadata to assign to the new server
-var newServer = new ImgLib2ImageServer(List.of(randomAccessible), server.getMetadata())
+var newServer = new ImgLib2ImageServer.Builder(List.of(randomAccessible)).build()
 println newServer
 ```

@@ -19,6 +19,7 @@ import qupath.lib.images.servers.AbstractTileableImageServer;
 import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.ImageServerBuilder;
 import qupath.lib.images.servers.ImageServerMetadata;
+import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.images.servers.PixelType;
 import qupath.lib.images.servers.TileRequest;
 
@@ -38,10 +39,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 /**
  * An {@link qupath.lib.images.servers.ImageServer} whose pixel values come from {@link RandomAccessibleInterval}.
+ * <p>
+ * Use a {@link Builder} to create an instance of this class.
  * <p>
  * This server doesn't support JSON serialization.
  *
@@ -52,64 +57,24 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
     private static final AtomicInteger counter = new AtomicInteger();
     private final List<RandomAccessibleInterval<T>> accessibles;
     private final ImageServerMetadata metadata;
-    private final String id;
     private final int numberOfChannelsInAccessibles;
 
-    /**
-     * Create an {@link ImgLib2ImageServer} from the provided accessibles and metadata.
-     * <p>
-     * The provided accessibles must correspond to the ones returned by functions of {@link ImgCreator}: they must have
-     * {@link ImgCreator#NUMBER_OF_AXES} dimensions, the X-axes must correspond to {@link ImgCreator#AXIS_X}, and so on.
-     * <p>
-     * All dimensions of the provided accessibles must contain {@link Integer#MAX_VALUE} pixels or less.
-     * <p>
-     * The type of the provided accessibles must be {@link ARGBType}, {@link UnsignedByteType}, {@link ByteType},
-     * {@link UnsignedShortType}, {@link ShortType}, {@link UnsignedIntType}, {@link IntType}, {@link FloatType}, or
-     * {@link DoubleType}.
-     *
-     * @param accessibles one accessible for each resolution level the image server should have, from highest to lowest resolution.
-     *                    Must not be empty. Each accessible must have the same number of channels, z-stacks, and timepoints
-     * @param metadata the metadata the image server should have. The width, height, number of z-stacks, number of time points, whether
-     *                 the image is RGB, pixel type, and resolution level are not taken from this metadata but determined from the provided
-     *                 accessibles. The channels of the provided metadata must correspond with the channel axes of the provided accessibles
-     * @throws NullPointerException if one of the provided parameters is null
-     * @throws NoSuchElementException if the provided list is empty
-     * @throws ArithmeticException if a dimension of an accessible contain more than {@link Integer#MAX_VALUE} pixels
-     * @throws IllegalArgumentException if the accessible type is not among the list mentioned above, if the provided accessibles do not have
-     * {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles do not have the same number of channels, z-stacks, or timepoints,
-     * if the provided accessibles have a different number of channels than what the provided metadata have (or if, when the accessibles type
-     * is {@link ARGBType}, the provided accessibles don't have one channel or the provided metadata doesn't contain the default RGB channels)
-     */
-    public ImgLib2ImageServer(List<RandomAccessibleInterval<T>> accessibles, ImageServerMetadata metadata) {
-        checkInputs(accessibles, metadata);
-
+    private ImgLib2ImageServer(List<RandomAccessibleInterval<T>> accessibles, PixelType pixelType, ImageServerMetadata metadata) {
         this.accessibles = accessibles;
 
-        T value = accessibles.getFirst().firstElement();
+        RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
+        T value = firstAccessible.firstElement();
         this.metadata = new ImageServerMetadata.Builder(metadata)
-                .width(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_X)))
-                .height(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_Y)))
+                .width((int) firstAccessible.dimension(ImgCreator.AXIS_X))
+                .height((int) firstAccessible.dimension(ImgCreator.AXIS_Y))
                 .rgb(value instanceof ARGBType)
-                .pixelType(switch (value) {
-                    case ARGBType ignored -> PixelType.UINT8;
-                    case UnsignedByteType ignored -> PixelType.UINT8;
-                    case ByteType ignored -> PixelType.INT8;
-                    case UnsignedShortType ignored -> PixelType.UINT16;
-                    case ShortType ignored -> PixelType.INT16;
-                    case UnsignedIntType ignored -> PixelType.UINT32;
-                    case IntType ignored -> PixelType.INT32;
-                    case FloatType ignored -> PixelType.FLOAT32;
-                    case DoubleType ignored -> PixelType.FLOAT64;
-                    default -> throw new IllegalArgumentException(String.format("Unexpected accessible type %s", value));
-                })
+                .pixelType(pixelType)
                 .levels(createResolutionLevels(accessibles))
-                .sizeZ(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_Z)))
-                .sizeT(Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_TIME)))
+                .sizeZ((int) firstAccessible.dimension(ImgCreator.AXIS_Z))
+                .sizeT((int) firstAccessible.dimension(ImgCreator.AXIS_TIME))
                 .build();
 
-        this.id = String.valueOf(counter.incrementAndGet());
-
-        this.numberOfChannelsInAccessibles = Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL));
+        this.numberOfChannelsInAccessibles = (int) firstAccessible.dimension(ImgCreator.AXIS_CHANNEL);
     }
 
     @Override
@@ -296,7 +261,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
 
     @Override
     protected String createID() {
-        return id;
+        return String.valueOf(counter.incrementAndGet());
     }
 
     @Override
@@ -319,75 +284,275 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
-    private static <T extends NativeType<T> & NumericType<T>> void checkInputs(List<RandomAccessibleInterval<T>> accessibles, ImageServerMetadata metadata) {
-        for (RandomAccessibleInterval<T> accessible: accessibles) {
-            if (accessible.numDimensions() != ImgCreator.NUMBER_OF_AXES) {
-                throw new IllegalArgumentException(String.format(
-                        "The provided accessible %s does not have %d dimensions",
-                        accessible,
-                        ImgCreator.NUMBER_OF_AXES
-                ));
-            }
+    /**
+     * A builder to create an instance of {@link ImgLib2ImageServer}.
+     *
+     * @param <T> the pixel type of the {@link ImgLib2ImageServer} to create
+     */
+    public static class Builder<T extends NativeType<T> & NumericType<T>> {
+
+        private static final int DEFAULT_TILE_SIZE = 1024;
+        private final List<RandomAccessibleInterval<T>> accessibles;
+        private final PixelType pixelType;
+        private ImageServerMetadata metadata;
+
+        /**
+         * Create a {@link ImgLib2ImageServer} builder.
+         * <p>
+         * The provided accessibles must correspond to the ones returned by functions of {@link ImgCreator}: they must have
+         * {@link ImgCreator#NUMBER_OF_AXES} dimensions, the X-axes must correspond to {@link ImgCreator#AXIS_X}, and so on.
+         * <p>
+         * All dimensions of the provided accessibles must contain {@link Integer#MAX_VALUE} pixels or less.
+         * <p>
+         * The type of the provided accessibles must be {@link ARGBType}, {@link UnsignedByteType}, {@link ByteType},
+         * {@link UnsignedShortType}, {@link ShortType}, {@link UnsignedIntType}, {@link IntType}, {@link FloatType}, or
+         * {@link DoubleType}. If the type is {@link ARGBType}, the provided accessibles must have one channel
+         *
+         * @param accessibles one accessible for each resolution level the image server should have, from highest to lowest
+         *                    resolution. Must not be empty. Each accessible must have the same number of channels, z-stacks,
+         *                    and timepoints
+         * @throws NullPointerException if the provided list is null or contain a null element
+         * @throws NoSuchElementException if the provided list is empty
+         * @throws IllegalArgumentException if the accessible type is not among the list mentioned above, if a dimension
+         * of a provided accessible contain more than {@link Integer#MAX_VALUE} pixels, if the provided accessibles do
+         * not have {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles do not have the same number of
+         * channels, z-stacks, or timepoints, or if the accessible type is {@link ARGBType} and the number of channels
+         * of the accessibles is not 1
+         */
+        public Builder(List<RandomAccessibleInterval<T>> accessibles) {
+            checkAccessibles(accessibles);
+
+            RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
+            T value = firstAccessible.firstElement();
+
+            this.accessibles = accessibles;
+            this.pixelType = switch (value) {
+                case ARGBType ignored -> PixelType.UINT8;
+                case UnsignedByteType ignored -> PixelType.UINT8;
+                case ByteType ignored -> PixelType.INT8;
+                case UnsignedShortType ignored -> PixelType.UINT16;
+                case ShortType ignored -> PixelType.INT16;
+                case UnsignedIntType ignored -> PixelType.UINT32;
+                case IntType ignored -> PixelType.INT32;
+                case FloatType ignored -> PixelType.FLOAT32;
+                case DoubleType ignored -> PixelType.FLOAT64;
+                default -> throw new IllegalArgumentException(String.format("Unexpected accessible type %s", value));
+            };
+            this.metadata = new ImageServerMetadata.Builder()
+                    .width(1)   // the width will be ignored, but it must be > 0 to avoid an exception when calling build()
+                    .height(1)  // the height will be ignored, but it must be > 0 to avoid an exception when calling build()
+                    .channels(value instanceof ARGBType ?
+                            ImageChannel.getDefaultRGBChannels() :
+                            ImageChannel.getDefaultChannelList((int) firstAccessible.dimension(ImgCreator.AXIS_CHANNEL))
+                    )
+                    .preferredTileSize(DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
+                    .build();
         }
 
-        Map<Integer, String> axes = Map.of(
-                ImgCreator.AXIS_CHANNEL, "number of channels",
-                ImgCreator.AXIS_Z, "number of z-stacks",
-                ImgCreator.AXIS_TIME, "number of timepoints"
-        );
-        for (var axis: axes.entrySet()) {
-            List<Long> numberOfElements = accessibles.stream()
-                    .map(accessible -> accessible.dimension(axis.getKey()))
-                    .distinct()
-                    .toList();
-            if (numberOfElements.size() > 1) {
-                throw new IllegalArgumentException(String.format(
-                        "The provided accessibles %s do not contain the same %s (found %s)",
-                        accessibles,
-                        axis.getValue(),
-                        numberOfElements
-                ));
-            }
+        /**
+         * Set the name of the {@link ImgLib2ImageServer} to build.
+         *
+         * @param name the name the image should have
+         * @return this builder
+         */
+        public Builder<T> name(String name) {
+            this.metadata = new ImageServerMetadata.Builder(metadata).name(name).build();
+            return this;
         }
 
-        if (accessibles.getFirst().firstElement() instanceof ARGBType) {
-            if (accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL) != 1) {
+        /**
+         * Set the channels of the {@link ImgLib2ImageServer} to build.
+         * <p>
+         * If not provided here or with {@link #metadata(ImageServerMetadata)}, the channels of the output image will be
+         * {@link ImageChannel#getDefaultRGBChannels()} or {@link ImageChannel#getDefaultChannelList(int)} depending on
+         * whether the accessible type is {@link ARGBType}.
+         *
+         * @param channels the channels to set. Must be {@link ImageChannel#getDefaultRGBChannels()} if the type of the
+         *                 current accessibles is {@link ARGBType}, or must match the number of channels of the current
+         *                 accessibles else
+         * @return this builder
+         * @throws NullPointerException if the provided list is null or contain a null element
+         * @throws IllegalArgumentException if the current accessibles have the {@link ARGBType} and the provided channels
+         * are not {@link ImageChannel#getDefaultRGBChannels()}, or if the current accessibles don't have the {@link ARGBType}
+         * and the provided number of channels doesn't match the number of channels of the current accessibles
+         */
+        public Builder<T> channels(Collection<ImageChannel> channels) {
+            checkChannels(accessibles, channels);
+
+            this.metadata = new ImageServerMetadata.Builder(metadata).channels(channels).build();
+            return this;
+        }
+
+        /**
+         * Set the tile size of the {@link ImgLib2ImageServer} to build.
+         * <p>
+         * If not provided here or with {@link #metadata(ImageServerMetadata)}, the tile width and height is set to 1024.
+         *
+         * @param tileWidth the tile width in pixels to set
+         * @param tileHeight the tile height in pixels to set
+         * @return this builder
+         */
+        public Builder<T> preferredTileSize(int tileWidth, int tileHeight) {
+            this.metadata = new ImageServerMetadata.Builder(metadata)
+                    .preferredTileSize(tileWidth, tileHeight)
+                    .build();
+            return this;
+        }
+
+        /**
+         * Set the pixel calibration of the {@link ImgLib2ImageServer} to build.
+         *
+         * @param pixelCalibration the pixel calibration to set
+         * @return this builder
+         * @throws NullPointerException if the provided pixel calibration is null
+         */
+        public Builder<T> pixelCalibration(PixelCalibration pixelCalibration) {
+            this.metadata = new ImageServerMetadata.Builder(metadata)
+                    .pixelSizeMicrons(pixelCalibration.getPixelWidthMicrons(), pixelCalibration.getPixelHeightMicrons())
+                    .zSpacingMicrons(pixelCalibration.getZSpacingMicrons())
+                    .timepoints(
+                            pixelCalibration.getTimeUnit(),
+                            IntStream.range(0, pixelCalibration.nTimepoints()).mapToDouble(pixelCalibration::getTimepoint).toArray()
+                    )
+                    .build();
+            return this;
+        }
+
+        /**
+         * Set metadata parameters of the {@link ImgLib2ImageServer} to build.
+         * <p>
+         * If not provided here or with {@link #channels(Collection)}, the channels of the output image will be
+         * {@link ImageChannel#getDefaultRGBChannels()} or {@link ImageChannel#getDefaultChannelList(int)} depending on
+         * whether the accessible type is {@link ARGBType}.
+         * <p>
+         * If not provided here or with {@link #preferredTileSize(int, int)}, the tile width and height is set to 1024.
+         *
+         * @param metadata the metadata the image server should have. The width, height, number of z-stacks, number of
+         *                 time points, whether the image is RGB, pixel type, and resolution level are not taken from
+         *                 this metadata but determined from the provided accessibles. The channels of the provided
+         *                 metadata must be {@link ImageChannel#getDefaultRGBChannels()} if the type of the current
+         *                 accessibles is {@link ARGBType}, or must match the number of channels of the current accessibles
+         *                 else
+         * @return this builder
+         * @throws NullPointerException if the provided metadata is null or if the channels of the provided metadata are
+         * null or contain a null element
+         * @throws IllegalArgumentException if the current accessibles have the {@link ARGBType} and the channels of the
+         * provided metadata are not {@link ImageChannel#getDefaultRGBChannels()}, or if the current accessibles don't
+         * have the {@link ARGBType} and the number of channels of the provided metadata doesn't match the number of
+         * channels of the current accessibles
+         */
+        public Builder<T> metadata(ImageServerMetadata metadata) {
+            checkChannels(accessibles, metadata.getChannels());
+
+            this.metadata = metadata;
+            return this;
+        }
+
+        /**
+         * Create an {@link ImgLib2ImageServer} from this builder.
+         *
+         * @return a new {@link ImgLib2ImageServer} whose parameters are determined from this builder
+         */
+        public ImgLib2ImageServer<T> build() {
+            return new ImgLib2ImageServer<>(accessibles, pixelType, metadata);
+        }
+
+        private static <T extends NativeType<T> & NumericType<T>> void checkAccessibles(List<RandomAccessibleInterval<T>> accessibles) {
+            for (RandomAccessibleInterval<T> accessible: accessibles) {
+                for (int dimension=0; dimension<accessible.numDimensions(); dimension++) {
+                    long numberOfValues = accessible.dimension(dimension);
+
+                    if ((int) numberOfValues != numberOfValues) {
+                        throw new IllegalArgumentException(String.format(
+                                "The dimension %d of the provided accessible %s contain more than %d pixels",
+                                dimension,
+                                accessible,
+                                Integer.MAX_VALUE
+                        ));
+                    }
+                }
+            }
+
+            for (RandomAccessibleInterval<T> accessible: accessibles) {
+                if (accessible.numDimensions() != ImgCreator.NUMBER_OF_AXES) {
+                    throw new IllegalArgumentException(String.format(
+                            "The provided accessible %s does not have %d dimensions",
+                            accessible,
+                            ImgCreator.NUMBER_OF_AXES
+                    ));
+                }
+            }
+
+            Map<Integer, String> axes = Map.of(
+                    ImgCreator.AXIS_CHANNEL, "number of channels",
+                    ImgCreator.AXIS_Z, "number of z-stacks",
+                    ImgCreator.AXIS_TIME, "number of timepoints"
+            );
+            for (var axis: axes.entrySet()) {
+                List<Long> numberOfElements = accessibles.stream()
+                        .map(accessible -> accessible.dimension(axis.getKey()))
+                        .distinct()
+                        .toList();
+                if (numberOfElements.size() > 1) {
+                    throw new IllegalArgumentException(String.format(
+                            "The provided accessibles %s do not contain the same %s (found %s)",
+                            accessibles,
+                            axis.getValue(),
+                            numberOfElements
+                    ));
+                }
+            }
+
+            RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
+            if (firstAccessible.firstElement() instanceof ARGBType && firstAccessible.dimension(ImgCreator.AXIS_CHANNEL) != 1) {
                 throw new IllegalArgumentException(String.format(
                         "The provided accessibles %s have the ARGB type, but not one channel (found %d)",
                         accessibles,
-                        accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL)
+                        firstAccessible.dimension(ImgCreator.AXIS_CHANNEL)
                 ));
             }
-            if (!metadata.getChannels().equals(ImageChannel.getDefaultRGBChannels())) {
-                throw new IllegalArgumentException(String.format(
-                        "The provided accessibles %s have the ARGB type, but the provided metadata %s doesn't contain the default RGB channels (found %s)",
-                        accessibles,
-                        metadata,
-                        metadata.getChannels()
-                ));
+        }
+
+        private static <T extends NativeType<T> & NumericType<T>> void checkChannels(
+                List<RandomAccessibleInterval<T>> accessibles,
+                Collection<ImageChannel> channels
+        ) {
+            for (ImageChannel channel: channels) {
+                Objects.requireNonNull(channel);
             }
-        } else {
-            if (accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL) != metadata.getSizeC()) {
-                throw new IllegalArgumentException(String.format(
-                        "The provided metadata contains %d channels, while the provided accessibles %s contain %s channels",
-                        metadata.getSizeC(),
-                        accessibles,
-                        accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL)
-                ));
+
+            if (accessibles.getFirst().firstElement() instanceof ARGBType) {
+                if (!channels.equals(ImageChannel.getDefaultRGBChannels())) {
+                    throw new IllegalArgumentException(String.format(
+                            "The current accessibles %s have the ARGB type, but the provided channels %s are not the default RGB channels %s",
+                            accessibles,
+                            channels,
+                            ImageChannel.getDefaultRGBChannels()
+                    ));
+                }
+            } else {
+                if (accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL) != channels.size()) {
+                    throw new IllegalArgumentException(String.format(
+                            "There are %d provided channels, but the current accessibles %s contain %s channels",
+                            channels.size(),
+                            accessibles,
+                            accessibles.getFirst().dimension(ImgCreator.AXIS_CHANNEL)
+                    ));
+                }
             }
         }
     }
 
     private static List<ImageServerMetadata.ImageResolutionLevel> createResolutionLevels(List<? extends RandomAccessibleInterval<?>> accessibles) {
         ImageServerMetadata.ImageResolutionLevel.Builder builder = new ImageServerMetadata.ImageResolutionLevel.Builder(
-                Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_X)),
-                Math.toIntExact(accessibles.getFirst().dimension(ImgCreator.AXIS_Y))
+                (int) accessibles.getFirst().dimension(ImgCreator.AXIS_X),
+                (int) accessibles.getFirst().dimension(ImgCreator.AXIS_Y)
         );
 
         for (RandomAccessibleInterval<?> accessible: accessibles) {
             builder.addLevel(
-                    Math.toIntExact(accessible.dimension(ImgCreator.AXIS_X)),
-                    Math.toIntExact(accessible.dimension(ImgCreator.AXIS_Y))
+                    (int) accessible.dimension(ImgCreator.AXIS_X),
+                    (int) accessible.dimension(ImgCreator.AXIS_Y)
             );
         }
 

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
+import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.images.servers.PixelType;
 import qupath.lib.objects.classes.PathClass;
 import qupath.lib.regions.RegionRequest;
@@ -36,6 +37,7 @@ import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -47,41 +49,43 @@ public class TestImgLib2ImageServer {
     @Test
     void Check_Null_Accessible() {
         List<RandomAccessibleInterval<ByteType>> accessibles = null;
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
     @Test
-    void Check_Null_Metadata() {
-        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1));
-        ImageServerMetadata metadata = null;
+    void Check_List_Contain_Null_Accessible() {
+        List<RandomAccessibleInterval<ByteType>> accessibles = new ArrayList<>();
+        accessibles.add(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1));
+        accessibles.add(null);
+        accessibles.add(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1));
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
     @Test
     void Check_Empty_List() {
         List<RandomAccessibleInterval<ByteType>> accessibles = List.of();
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
 
         Assertions.assertThrows(
                 NoSuchElementException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+        );
+    }
+
+    @Test
+    void Check_Invalid_Type() {
+        List<RandomAccessibleInterval<BitType>> accessibles = List.of(new ArrayImgFactory<>(new BitType(false)).create(1, 1, 1, 1, 1));
+
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
@@ -96,45 +100,20 @@ public class TestImgLib2ImageServer {
                         new ByteArray(5)
                 )
         ));     // LazyCellImg instead of ArrayImgFactory because an ArrayImgFactory of this size cannot be created
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
-
-        Assertions.assertThrows(
-                ArithmeticException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
-        );
-    }
-
-    @Test
-    void Check_Invalid_Type() {
-        List<RandomAccessibleInterval<BitType>> accessibles = List.of(new ArrayImgFactory<>(new BitType(false)).create(1, 1, 1, 1, 1));
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
     @Test
     void Check_Invalid_Number_Of_Axes() {
         List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1));
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
@@ -144,15 +123,10 @@ public class TestImgLib2ImageServer {
                 new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1),
                 new ArrayImgFactory<>(new ByteType()).create(1, 1, 2, 1, 1)
         );
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
@@ -162,15 +136,10 @@ public class TestImgLib2ImageServer {
                 new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1),
                 new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 2, 1)
         );
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
@@ -180,65 +149,266 @@ public class TestImgLib2ImageServer {
                 new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1),
                 new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 2)
         );
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
-        );
-    }
-
-    @Test
-    void Check_Different_Number_Of_Channels_Between_Accessibles_And_Metadata() {
-        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 2, 1, 1));
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
-
-        Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
     @Test
     void Check_Not_One_Channel_In_Accessibles_When_Argb() {
         List<RandomAccessibleInterval<ARGBType>> accessibles = List.of(new ArrayImgFactory<>(new ARGBType()).create(1, 1, 2, 1, 1));
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(ImageChannel.getDefaultRGBChannels())
-                .build();
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }
 
     @Test
-    void Check_Not_Rgb_Channels_In_Metadata_When_Argb() {
+    void Check_Metadata_When_Nothing_Provided() throws Exception {
+        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
+                new ArrayImgFactory<>(new FloatType()).create(100, 200, 2, 12, 7),
+                new ArrayImgFactory<>(new FloatType()).create(25, 50, 2, 12, 7)
+        );
+        ImageServerMetadata expectedMetadata = new ImageServerMetadata.Builder()
+                .width(100)
+                .height(200)
+                .rgb(false)
+                .pixelType(PixelType.FLOAT32)
+                .levelsFromDownsamples(1, 4)
+                .sizeZ(12)
+                .sizeT(7)
+                .channels(ImageChannel.getDefaultChannelList(2))
+                .preferredTileSize(1024, 1024)
+                .build();
+        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
+
+        ImageServerMetadata metadata = server.getMetadata();
+
+        Assertions.assertEquals(expectedMetadata, metadata);
+
+        server.close();
+    }
+
+    @Test
+    void Check_Metadata_When_Name_Provided() throws Exception {
+        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
+                new ArrayImgFactory<>(new FloatType()).create(100, 200, 2, 12, 7),
+                new ArrayImgFactory<>(new FloatType()).create(25, 50, 2, 12, 7)
+        );
+        String name = "Some name";
+        ImageServerMetadata expectedMetadata = new ImageServerMetadata.Builder()
+                .width(100)
+                .height(200)
+                .rgb(false)
+                .pixelType(PixelType.FLOAT32)
+                .levelsFromDownsamples(1, 4)
+                .sizeZ(12)
+                .sizeT(7)
+                .channels(ImageChannel.getDefaultChannelList(2))
+                .preferredTileSize(1024, 1024)
+                .name(name)
+                .build();
+        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).name(name).build();
+
+        ImageServerMetadata metadata = server.getMetadata();
+
+        Assertions.assertEquals(expectedMetadata, metadata);
+
+        server.close();
+    }
+
+    @Test
+    void Check_Null_Channels() {
+        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1));
+        List<ImageChannel> channels = null;
+
+        Assertions.assertThrows(
+                NullPointerException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).channels(channels)
+        );
+    }
+
+    @Test
+    void Check_Non_Rgb_Channels_When_Argb() {
         List<RandomAccessibleInterval<ARGBType>> accessibles = List.of(new ArrayImgFactory<>(new ARGBType()).create(1, 1, 1, 1, 1));
-        ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                .width(1)
-                .height(1)
-                .channels(List.of(ImageChannel.getInstance("Channel", 0)))
-                .build();
+        List<ImageChannel> channels = List.of(ImageChannel.getInstance("Channel", 0));
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer<>(accessibles, metadata)
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).channels(channels)
         );
     }
 
     @Test
-    void Check_Metadata() throws Exception {
+    void Check_Different_Number_Of_Channels_With_Accessibles() {
+        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 2, 1, 1));
+        List<ImageChannel> channels = List.of(ImageChannel.getInstance("Channel", 0));
+
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).channels(channels)
+        );
+    }
+
+    @Test
+    void Check_Metadata_When_Channels_Provided() throws Exception {
+        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
+                new ArrayImgFactory<>(new FloatType()).create(100, 200, 2, 12, 7),
+                new ArrayImgFactory<>(new FloatType()).create(25, 50, 2, 12, 7)
+        );
+        List<ImageChannel> channels = List.of(
+                ImageChannel.getInstance("Some channel 1", 1),
+                ImageChannel.getInstance("Some channel 2", 2)
+        );
+        ImageServerMetadata expectedMetadata = new ImageServerMetadata.Builder()
+                .width(100)
+                .height(200)
+                .rgb(false)
+                .pixelType(PixelType.FLOAT32)
+                .levelsFromDownsamples(1, 4)
+                .sizeZ(12)
+                .sizeT(7)
+                .channels(channels)
+                .preferredTileSize(1024, 1024)
+                .build();
+        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).channels(channels).build();
+
+        ImageServerMetadata metadata = server.getMetadata();
+
+        Assertions.assertEquals(expectedMetadata, metadata);
+
+        server.close();
+    }
+
+    @Test
+    void Check_Metadata_When_Tile_Size_Provided() throws Exception {
+        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
+                new ArrayImgFactory<>(new FloatType()).create(100, 200, 2, 12, 7),
+                new ArrayImgFactory<>(new FloatType()).create(25, 50, 2, 12, 7)
+        );
+        int tileWidth = 22;
+        int tileHeight = 54;
+        ImageServerMetadata expectedMetadata = new ImageServerMetadata.Builder()
+                .width(100)
+                .height(200)
+                .rgb(false)
+                .pixelType(PixelType.FLOAT32)
+                .levelsFromDownsamples(1, 4)
+                .sizeZ(12)
+                .sizeT(7)
+                .channels(ImageChannel.getDefaultChannelList(2))
+                .preferredTileSize(tileWidth, tileHeight)
+                .build();
+        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles)
+                .preferredTileSize(tileWidth, tileHeight)
+                .build();
+
+        ImageServerMetadata metadata = server.getMetadata();
+
+        Assertions.assertEquals(expectedMetadata, metadata);
+
+        server.close();
+    }
+
+    @Test
+    void Check_Null_Pixel_Calibration() {
+        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1));
+        PixelCalibration pixelCalibration = null;
+
+        Assertions.assertThrows(
+                NullPointerException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).pixelCalibration(pixelCalibration)
+        );
+    }
+
+    @Test
+    void Check_Metadata_When_Pixel_Calibration_Provided() throws Exception {
+        List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
+                new ArrayImgFactory<>(new FloatType()).create(100, 200, 2, 12, 7),
+                new ArrayImgFactory<>(new FloatType()).create(25, 50, 2, 12, 7)
+        );
+        PixelCalibration pixelCalibration = new PixelCalibration.Builder()
+                .pixelSizeMicrons(4.4, 4)
+                .zSpacingMicrons(.5)
+                .timepoints(TimeUnit.DAYS, 1, 5.6)
+                .build();
+        ImageServerMetadata expectedMetadata = new ImageServerMetadata.Builder()
+                .width(100)
+                .height(200)
+                .rgb(false)
+                .pixelType(PixelType.FLOAT32)
+                .levelsFromDownsamples(1, 4)
+                .sizeZ(12)
+                .sizeT(7)
+                .channels(ImageChannel.getDefaultChannelList(2))
+                .preferredTileSize(1024, 1024)
+                .pixelSizeMicrons(4.4, 4)
+                .zSpacingMicrons(.5)
+                .timepoints(TimeUnit.DAYS, 1, 5.6)
+                .build();
+        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).pixelCalibration(pixelCalibration).build();
+
+        ImageServerMetadata metadata = server.getMetadata();
+
+        Assertions.assertEquals(expectedMetadata, metadata);
+
+        server.close();
+    }
+
+    @Test
+    void Check_Null_Metadata() {
+        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1));
+        ImageServerMetadata metadata = null;
+
+        Assertions.assertThrows(
+                NullPointerException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+        );
+    }
+
+    @Test
+    void Check_Null_Channels_In_Metadata() {
+        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 1, 1, 1));
+        List<ImageChannel> channels = new ArrayList<>();
+        channels.add(ImageChannel.getInstance("Channel", 0));
+        channels.add(null);
+        ImageServerMetadata metadata = new ImageServerMetadata.Builder().width(1).height(1).channels(channels).build();
+
+        Assertions.assertThrows(
+                NullPointerException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+        );
+    }
+
+    @Test
+    void Check_Non_Rgb_Channels_In_Metadata_When_Argb() {
+        List<RandomAccessibleInterval<ARGBType>> accessibles = List.of(new ArrayImgFactory<>(new ARGBType()).create(1, 1, 1, 1, 1));
+        List<ImageChannel> channels = List.of(ImageChannel.getInstance("Channel", 0));
+        ImageServerMetadata metadata = new ImageServerMetadata.Builder().width(1).height(1).channels(channels).build();
+
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+        );
+    }
+
+    @Test
+    void Check_Different_Number_Of_Channels_In_Metadata_With_Accessibles() {
+        List<RandomAccessibleInterval<ByteType>> accessibles = List.of(new ArrayImgFactory<>(new ByteType()).create(1, 1, 2, 1, 1));
+        List<ImageChannel> channels = List.of(ImageChannel.getInstance("Channel", 0));
+        ImageServerMetadata metadata = new ImageServerMetadata.Builder().width(1).height(1).channels(channels).build();
+
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+        );
+    }
+
+    @Test
+    void Check_Metadata_When_Metadata_Provided() throws Exception {
         List<RandomAccessibleInterval<FloatType>> accessibles = List.of(
                 new ArrayImgFactory<>(new FloatType()).create(100, 200, 2, 12, 7),
                 new ArrayImgFactory<>(new FloatType()).create(25, 50, 2, 12, 7)
@@ -269,8 +439,8 @@ public class TestImgLib2ImageServer {
                 ))
                 .name("Image name")
                 .build();
-        ImageServerMetadata expectedMetadata = new ImageServerMetadata.Builder()    // same as metadata, except for values mentionned in the constructor
-                .width(100)                                                         // of ImgLib2ImageServer
+        ImageServerMetadata expectedMetadata = new ImageServerMetadata.Builder()    // same as metadata, except for values mentioned in ImgLib2ImageServer.Builder.metadata
+                .width(100)
                 .height(200)
                 .minValue(-23.23)
                 .maxValue(10345)
@@ -295,7 +465,7 @@ public class TestImgLib2ImageServer {
                 ))
                 .name("Image name")
                 .build();
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, providedMetadata);
+        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).metadata(providedMetadata).build();
 
         ImageServerMetadata metadata = server.getMetadata();
 
@@ -309,13 +479,8 @@ public class TestImgLib2ImageServer {
         @Test
         void Check_Full_Resolution_Pixels() throws Exception {
             List<RandomAccessibleInterval<T>> accessibles = getAccessibles();
-            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                    .width(100)
-                    .height(200)
-                    .channels(getChannels())
-                    .build();
             BufferedImage expectedImage = getExpectedFullResolutionImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server).updateT(1));
 
@@ -327,13 +492,8 @@ public class TestImgLib2ImageServer {
         @Test
         void Check_Lowest_Resolution_Pixels() throws Exception {
             List<RandomAccessibleInterval<T>> accessibles = getAccessibles();
-            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                    .width(100)
-                    .height(200)
-                    .channels(getChannels())
-                    .build();
             BufferedImage expectedImage = getExpectedLowestResolutionImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server, 2));
 
@@ -349,13 +509,8 @@ public class TestImgLib2ImageServer {
                     new long[] {1, 0, 0, 0, 1},
                     new long[] {1, 1, 0, 0, 1}
             ));
-            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                    .width(100)
-                    .height(200)
-                    .channels(getChannels())
-                    .build();
             BufferedImage expectedImage = getExpectedViewOfImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
 
@@ -367,14 +522,8 @@ public class TestImgLib2ImageServer {
         @Test
         void Check_Pixels_On_Big_Image() throws Exception {
             List<RandomAccessibleInterval<T>> accessibles = getBigAccessibles();
-            ImageServerMetadata metadata = new ImageServerMetadata.Builder()
-                    .width(1)
-                    .height(1)
-                    .channels(getChannels())
-                    .preferredTileSize(75, 75)
-                    .build();
             BufferedImage expectedImage = getExpectedBigImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer<>(accessibles, metadata);
+            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
 
@@ -386,8 +535,6 @@ public class TestImgLib2ImageServer {
         abstract protected List<RandomAccessibleInterval<T>> getAccessibles();
 
         abstract protected List<RandomAccessibleInterval<T>> getBigAccessibles();
-
-        abstract protected List<ImageChannel> getChannels();
 
         abstract protected BufferedImage getExpectedFullResolutionImage();
 
@@ -436,11 +583,6 @@ public class TestImgLib2ImageServer {
                             .map(i -> ARGBType.rgba(120, i % 255, 0, 255))
                             .toArray()
             ));
-        }
-
-        @Override
-        protected List<ImageChannel> getChannels() {
-            return ImageChannel.getDefaultRGBChannels();
         }
 
         @Override
@@ -534,11 +676,6 @@ public class TestImgLib2ImageServer {
                             .toArray(),
                     new UnsignedByteType()
             ));
-        }
-
-        @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
         }
 
         @Override
@@ -648,11 +785,6 @@ public class TestImgLib2ImageServer {
         }
 
         @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
-        }
-
-        @Override
         protected BufferedImage getExpectedFullResolutionImage() {
             return Utils.createBufferedImage(
                     new DataBufferByte(new byte[][] { new byte[] {
@@ -756,11 +888,6 @@ public class TestImgLib2ImageServer {
                             .toArray(),
                     new UnsignedShortType()
             ));
-        }
-
-        @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
         }
 
         @Override
@@ -870,11 +997,6 @@ public class TestImgLib2ImageServer {
         }
 
         @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
-        }
-
-        @Override
         protected BufferedImage getExpectedFullResolutionImage() {
             return Utils.createBufferedImage(
                     new DataBufferShort(new short[][] { new short[] {
@@ -981,11 +1103,6 @@ public class TestImgLib2ImageServer {
         }
 
         @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
-        }
-
-        @Override
         protected BufferedImage getExpectedFullResolutionImage() {
             return Utils.createBufferedImage(
                     new DataBufferInt(new int[][] { new int[] {
@@ -1088,11 +1205,6 @@ public class TestImgLib2ImageServer {
         }
 
         @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
-        }
-
-        @Override
         protected BufferedImage getExpectedFullResolutionImage() {
             return Utils.createBufferedImage(
                     new DataBufferInt(new int[][] { new int[] {
@@ -1192,11 +1304,6 @@ public class TestImgLib2ImageServer {
                             .toArray(),
                     new FloatType()
             ));
-        }
-
-        @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
         }
 
         @Override
@@ -1303,11 +1410,6 @@ public class TestImgLib2ImageServer {
                             .toArray(),
                     new DoubleType()
             ));
-        }
-
-        @Override
-        protected List<ImageChannel> getChannels() {
-            return List.of(ImageChannel.getInstance("Channel", 0));
         }
 
         @Override
