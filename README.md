@@ -8,8 +8,8 @@ Here is a sample script that shows how to use the library from QuPath:
 
 ```groovy
 import qupath.ext.imglib2.ImgCreator
+import qupath.ext.imglib2.ImgLib2ImageServer
 import net.imglib2.type.numeric.ARGBType
-import qupath.ext.imglib2.imageserver.ImgLib2ImageServer
 
 
 var server = getCurrentServer()

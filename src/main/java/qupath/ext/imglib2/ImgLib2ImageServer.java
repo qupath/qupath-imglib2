@@ -1,4 +1,4 @@
-package qupath.ext.imglib2.imageserver;
+package qupath.ext.imglib2;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
@@ -14,7 +14,6 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-import qupath.ext.imglib2.ImgCreator;
 import qupath.lib.color.ColorModelFactory;
 import qupath.lib.images.servers.AbstractTileableImageServer;
 import qupath.lib.images.servers.ImageChannel;
@@ -43,6 +42,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An {@link qupath.lib.images.servers.ImageServer} whose pixel values come from {@link RandomAccessibleInterval}.
+ * <p>
+ * This server doesn't support JSON serialization.
  *
  * @param <T> the pixel type of the underlying {@link RandomAccessibleInterval}
  */
@@ -290,7 +291,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
 
     @Override
     protected ImageServerBuilder.ServerBuilder<BufferedImage> createServerBuilder() {
-        return new ImgLib2ServerBuilder<>(accessibles, getMetadata());
+        return null;
     }
 
     @Override

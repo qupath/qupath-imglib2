@@ -1,4 +1,4 @@
-package qupath.ext.imglib2.imageserver;
+package qupath.ext.imglib2;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -22,7 +22,6 @@ import net.imglib2.view.Views;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import qupath.ext.imglib2.Utils;
 import qupath.lib.images.servers.ImageChannel;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
