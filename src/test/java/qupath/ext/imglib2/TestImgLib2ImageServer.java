@@ -40,7 +40,6 @@ import java.awt.image.DataBufferUShort;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -74,7 +73,7 @@ public class TestImgLib2ImageServer {
         List<RandomAccessibleInterval<ByteType>> accessibles = List.of();
 
         Assertions.assertThrows(
-                NoSuchElementException.class,
+                IllegalArgumentException.class,
                 () -> new ImgLib2ImageServer.Builder<>(accessibles)
         );
     }

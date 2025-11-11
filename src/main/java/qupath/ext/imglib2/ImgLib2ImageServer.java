@@ -37,7 +37,6 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -300,12 +299,11 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
          *                    resolution. Must not be empty. Each accessible must have the same number of channels, z-stacks,
          *                    and timepoints
          * @throws NullPointerException if the provided list is null or contain a null element
-         * @throws NoSuchElementException if the provided list is empty
-         * @throws IllegalArgumentException if the accessible type is not among the list mentioned above, if a dimension
-         * of a provided accessible contain more than {@link Integer#MAX_VALUE} pixels, if the provided accessibles do
-         * not have {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles do not have the same number of
-         * channels, z-stacks, or timepoints, or if the accessible type is {@link ARGBType} and the number of channels
-         * of the accessibles is not 1
+         * @throws IllegalArgumentException if the provided list is empty, if the accessible type is not among the list
+         * mentioned above, if a dimension of a provided accessible contain more than {@link Integer#MAX_VALUE} pixels,
+         * if the provided accessibles do not have {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles
+         * do not have the same number of channels, z-stacks, or timepoints, or if the accessible type is {@link ARGBType}
+         * and the number of channels of the accessibles is not 1
          */
         public Builder(List<RandomAccessibleInterval<T>> accessibles) {
             checkAccessibles(accessibles);
@@ -446,6 +444,16 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         }
 
         private static <T extends NativeType<T> & NumericType<T>> void checkAccessibles(List<RandomAccessibleInterval<T>> accessibles) {
+            if (accessibles == null) {
+                throw new NullPointerException("The provided list of accessibles is null");
+            }
+            if (accessibles.stream().anyMatch(Objects::isNull)) {
+                throw new NullPointerException(String.format("One of the provided accessibles %s is null", accessibles));
+            }
+            if (accessibles.isEmpty()) {
+                throw new IllegalArgumentException("The provided list of accessibles is empty");
+            }
+
             for (RandomAccessibleInterval<T> accessible: accessibles) {
                 for (int dimension=0; dimension<accessible.numDimensions(); dimension++) {
                     long numberOfValues = accessible.dimension(dimension);
