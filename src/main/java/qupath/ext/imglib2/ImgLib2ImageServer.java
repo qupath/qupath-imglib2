@@ -82,145 +82,22 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         int minTileY = Math.toIntExact(tile.min(ImgCreator.AXIS_Y));
         int minTileC = Math.toIntExact(tile.min(ImgCreator.AXIS_CHANNEL));
 
-        int xyPlaneSize = Math.toIntExact(tile.dimension(ImgCreator.AXIS_X) * tile.dimension(ImgCreator.AXIS_Y));
         Cursor<T> cursor = tile.localizingCursor();
 
         if (isRGB()) {
-            BufferedImage image = new BufferedImage(tileRequest.getTileWidth(), tileRequest.getTileHeight(), BufferedImage.TYPE_INT_ARGB);
-            DataBufferInt buffer = (DataBufferInt) image.getRaster().getDataBuffer();
-
-            while (cursor.hasNext()) {
-                ARGBType value = (ARGBType) cursor.next();
-
-                int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                        (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                buffer.setElem(xy, value.get());
-            }
-
-            return image;
+            return createArgbImage(tileRequest, cursor, minTileX, minTileY);
         } else {
+            int xyPlaneSize = Math.toIntExact(tile.dimension(ImgCreator.AXIS_X) * tile.dimension(ImgCreator.AXIS_Y));
+
             DataBuffer dataBuffer = switch (metadata.getPixelType()) {
-                case UINT8 -> {
-                    byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        UnsignedByteType value = (UnsignedByteType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.getByte();
-                    }
-
-                    yield new DataBufferByte(pixels, xyPlaneSize);
-                }
-                case INT8 -> {
-                    byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        ByteType value = (ByteType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.getByte();
-                    }
-
-                    yield new DataBufferByte(pixels, xyPlaneSize);
-                }
-                case UINT16 -> {
-                    short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        UnsignedShortType value = (UnsignedShortType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.getShort();
-                    }
-
-                    yield new DataBufferUShort(pixels, xyPlaneSize);
-                }
-                case INT16 -> {
-                    short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        ShortType value = (ShortType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.getShort();
-                    }
-
-                    yield new DataBufferShort(pixels, xyPlaneSize);
-                }
-                case UINT32 -> {
-                    int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        UnsignedIntType value = (UnsignedIntType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.getInt();
-                    }
-
-                    yield new DataBufferInt(pixels, xyPlaneSize);
-                }
-                case INT32 -> {
-                    int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        IntType value = (IntType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.getInt();
-                    }
-
-                    yield new DataBufferInt(pixels, xyPlaneSize);
-                }
-                case FLOAT32 -> {
-                    float[][] pixels = new float[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        FloatType value = (FloatType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.get();
-                    }
-
-                    yield new DataBufferFloat(pixels, xyPlaneSize);
-                }
-                case FLOAT64 -> {
-                    double[][] pixels = new double[numberOfChannelsInAccessibles][xyPlaneSize];
-
-                    while (cursor.hasNext()) {
-                        DoubleType value = (DoubleType) cursor.next();
-
-                        int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
-                        int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
-                                (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
-
-                        pixels[c][xy] = value.get();
-                    }
-
-                    yield new DataBufferDouble(pixels, xyPlaneSize);
-                }
+                case UINT8 -> createUint8DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
+                case INT8 -> createInt8DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
+                case UINT16 -> createUint16DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
+                case INT16 -> createInt16DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
+                case UINT32 -> createUint32DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
+                case INT32 -> createInt32DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
+                case FLOAT32 -> createFloat32DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
+                case FLOAT64 -> createFloat64DataBuffer(cursor, xyPlaneSize, tileRequest.getTileWidth(), minTileX, minTileY, minTileC);
             };
 
             return new BufferedImage(
@@ -576,5 +453,149 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         max[ImgCreator.AXIS_TIME] = min[ImgCreator.AXIS_TIME];
 
         return Views.interval(wholeLevel, min, max);
+    }
+
+    private BufferedImage createArgbImage(TileRequest tileRequest, Cursor<T> cursor, int minTileX, int minTileY) {
+        BufferedImage image = new BufferedImage(tileRequest.getTileWidth(), tileRequest.getTileHeight(), BufferedImage.TYPE_INT_ARGB);
+        DataBufferInt buffer = (DataBufferInt) image.getRaster().getDataBuffer();
+
+        while (cursor.hasNext()) {
+            ARGBType value = (ARGBType) cursor.next();
+
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileRequest.getTileWidth();
+
+            buffer.setElem(xy, value.get());
+        }
+
+        return image;
+    }
+
+    private DataBuffer createUint8DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            UnsignedByteType value = (UnsignedByteType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.getByte();
+        }
+
+        return new DataBufferByte(pixels, xyPlaneSize);
+    }
+
+    private DataBuffer createInt8DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        byte[][] pixels = new byte[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            ByteType value = (ByteType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.getByte();
+        }
+
+        return new DataBufferByte(pixels, xyPlaneSize);
+    }
+
+    private DataBuffer createUint16DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            UnsignedShortType value = (UnsignedShortType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.getShort();
+        }
+
+        return new DataBufferUShort(pixels, xyPlaneSize);
+    }
+
+    private DataBuffer createInt16DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        short[][] pixels = new short[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            ShortType value = (ShortType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.getShort();
+        }
+
+        return new DataBufferShort(pixels, xyPlaneSize);
+    }
+
+    private DataBuffer createUint32DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            UnsignedIntType value = (UnsignedIntType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.getInt();
+        }
+
+        return new DataBufferInt(pixels, xyPlaneSize);
+    }
+
+    private DataBuffer createInt32DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        int[][] pixels = new int[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            IntType value = (IntType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.getInt();
+        }
+
+        return new DataBufferInt(pixels, xyPlaneSize);
+    }
+
+    private DataBuffer createFloat32DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        float[][] pixels = new float[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            FloatType value = (FloatType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.get();
+        }
+
+        return new DataBufferFloat(pixels, xyPlaneSize);
+    }
+
+    private DataBuffer createFloat64DataBuffer(Cursor<T> cursor, int xyPlaneSize, int tileWidth, int minTileX, int minTileY, int minTileC) {
+        double[][] pixels = new double[numberOfChannelsInAccessibles][xyPlaneSize];
+
+        while (cursor.hasNext()) {
+            DoubleType value = (DoubleType) cursor.next();
+
+            int c = cursor.getIntPosition(ImgCreator.AXIS_CHANNEL) - minTileC;
+            int xy = cursor.getIntPosition(ImgCreator.AXIS_X) - minTileX +
+                    (cursor.getIntPosition(ImgCreator.AXIS_Y) - minTileY) * tileWidth;
+
+            pixels[c][xy] = value.get();
+        }
+
+        return new DataBufferDouble(pixels, xyPlaneSize);
     }
 }
