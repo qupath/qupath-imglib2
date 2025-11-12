@@ -53,11 +53,11 @@ import java.util.stream.IntStream;
 public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extends AbstractTileableImageServer {
 
     private static final AtomicInteger counter = new AtomicInteger();
-    private final List<RandomAccessibleInterval<T>> accessibles;
+    private final List<? extends RandomAccessibleInterval<T>> accessibles;
     private final ImageServerMetadata metadata;
     private final int numberOfChannelsInAccessibles;
 
-    private ImgLib2ImageServer(List<RandomAccessibleInterval<T>> accessibles, PixelType pixelType, ImageServerMetadata metadata) {
+    private ImgLib2ImageServer(List<? extends RandomAccessibleInterval<T>> accessibles, PixelType pixelType, ImageServerMetadata metadata) {
         this.accessibles = accessibles;
 
         RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
@@ -97,7 +97,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
      * do not have the same number of channels, z-stacks, or timepoints, or if the accessible type is {@link ARGBType}
      * and the number of channels of the accessibles is not 1
      */
-    public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(List<RandomAccessibleInterval<T>> accessibles) {
+    public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(List<? extends RandomAccessibleInterval<T>> accessibles) {
         return new Builder<>(accessibles);
     }
 
@@ -182,11 +182,11 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
     public static class Builder<T extends NativeType<T> & NumericType<T>> {
 
         private static final int DEFAULT_TILE_SIZE = 1024;
-        private final List<RandomAccessibleInterval<T>> accessibles;
+        private final List<? extends RandomAccessibleInterval<T>> accessibles;
         private final PixelType pixelType;
         private ImageServerMetadata metadata;
 
-        private Builder(List<RandomAccessibleInterval<T>> accessibles) {
+        private Builder(List<? extends RandomAccessibleInterval<T>> accessibles) {
             checkAccessibles(accessibles);
 
             RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
@@ -324,7 +324,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
             return new ImgLib2ImageServer<>(accessibles, pixelType, metadata);
         }
 
-        private static <T extends NativeType<T> & NumericType<T>> void checkAccessibles(List<RandomAccessibleInterval<T>> accessibles) {
+        private static <T extends NativeType<T> & NumericType<T>> void checkAccessibles(List<? extends RandomAccessibleInterval<T>> accessibles) {
             if (accessibles == null) {
                 throw new NullPointerException("The provided list of accessibles is null");
             }
@@ -391,7 +391,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         }
 
         private static <T extends NativeType<T> & NumericType<T>> void checkChannels(
-                List<RandomAccessibleInterval<T>> accessibles,
+                List<? extends RandomAccessibleInterval<T>> accessibles,
                 Collection<ImageChannel> channels
         ) {
             for (ImageChannel channel: channels) {
