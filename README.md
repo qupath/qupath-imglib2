@@ -54,6 +54,6 @@ println pixel
 
 
 // It is also possible to create an ImageServer from a RandomAccessible or Img.
-var newServer = new ImgLib2ImageServer.Builder(List.of(randomAccessible)).build()
+var newServer = ImgLib2ImageServer.builder(List.of(randomAccessible)).build()
 println newServer
 ```

@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
 /**
  * An {@link qupath.lib.images.servers.ImageServer} whose pixel values come from {@link RandomAccessibleInterval}.
  * <p>
- * Use a {@link Builder} to create an instance of this class.
+ * Use a {@link #builder(List)} to create an instance of this class.
  * <p>
  * This server doesn't support JSON serialization.
  *
@@ -73,6 +73,32 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 .build();
 
         this.numberOfChannelsInAccessibles = (int) firstAccessible.dimension(ImgCreator.AXIS_CHANNEL);
+    }
+
+    /**
+     * Create a {@link ImgLib2ImageServer} builder.
+     * <p>
+     * The provided accessibles must correspond to the ones returned by functions of {@link ImgCreator}: they must have
+     * {@link ImgCreator#NUMBER_OF_AXES} dimensions, the X-axes must correspond to {@link ImgCreator#AXIS_X}, and so on.
+     * <p>
+     * All dimensions of the provided accessibles must contain {@link Integer#MAX_VALUE} pixels or less.
+     * <p>
+     * The type of the provided accessibles must be {@link ARGBType}, {@link UnsignedByteType}, {@link ByteType},
+     * {@link UnsignedShortType}, {@link ShortType}, {@link UnsignedIntType}, {@link IntType}, {@link FloatType}, or
+     * {@link DoubleType}. If the type is {@link ARGBType}, the provided accessibles must have one channel
+     *
+     * @param accessibles one accessible for each resolution level the image server should have, from highest to lowest
+     *                    resolution. Must not be empty. Each accessible must have the same number of channels, z-stacks,
+     *                    and timepoints
+     * @throws NullPointerException if the provided list is null or contain a null element
+     * @throws IllegalArgumentException if the provided list is empty, if the accessible type is not among the list
+     * mentioned above, if a dimension of a provided accessible contain more than {@link Integer#MAX_VALUE} pixels,
+     * if the provided accessibles do not have {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles
+     * do not have the same number of channels, z-stacks, or timepoints, or if the accessible type is {@link ARGBType}
+     * and the number of channels of the accessibles is not 1
+     */
+    public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(List<RandomAccessibleInterval<T>> accessibles) {
+        return new Builder<>(accessibles);
     }
 
     @Override
@@ -160,29 +186,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         private final PixelType pixelType;
         private ImageServerMetadata metadata;
 
-        /**
-         * Create a {@link ImgLib2ImageServer} builder.
-         * <p>
-         * The provided accessibles must correspond to the ones returned by functions of {@link ImgCreator}: they must have
-         * {@link ImgCreator#NUMBER_OF_AXES} dimensions, the X-axes must correspond to {@link ImgCreator#AXIS_X}, and so on.
-         * <p>
-         * All dimensions of the provided accessibles must contain {@link Integer#MAX_VALUE} pixels or less.
-         * <p>
-         * The type of the provided accessibles must be {@link ARGBType}, {@link UnsignedByteType}, {@link ByteType},
-         * {@link UnsignedShortType}, {@link ShortType}, {@link UnsignedIntType}, {@link IntType}, {@link FloatType}, or
-         * {@link DoubleType}. If the type is {@link ARGBType}, the provided accessibles must have one channel
-         *
-         * @param accessibles one accessible for each resolution level the image server should have, from highest to lowest
-         *                    resolution. Must not be empty. Each accessible must have the same number of channels, z-stacks,
-         *                    and timepoints
-         * @throws NullPointerException if the provided list is null or contain a null element
-         * @throws IllegalArgumentException if the provided list is empty, if the accessible type is not among the list
-         * mentioned above, if a dimension of a provided accessible contain more than {@link Integer#MAX_VALUE} pixels,
-         * if the provided accessibles do not have {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles
-         * do not have the same number of channels, z-stacks, or timepoints, or if the accessible type is {@link ARGBType}
-         * and the number of channels of the accessibles is not 1
-         */
-        public Builder(List<RandomAccessibleInterval<T>> accessibles) {
+        private Builder(List<RandomAccessibleInterval<T>> accessibles) {
             checkAccessibles(accessibles);
 
             RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();

@@ -51,7 +51,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -64,7 +64,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -74,7 +74,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -84,7 +84,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -102,7 +102,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -112,7 +112,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -125,7 +125,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -138,7 +138,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -151,7 +151,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -161,7 +161,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles)
+                () -> ImgLib2ImageServer.builder(accessibles)
         );
     }
 
@@ -182,7 +182,7 @@ public class TestImgLib2ImageServer {
                 .channels(ImageChannel.getDefaultChannelList(2))
                 .preferredTileSize(1024, 1024)
                 .build();
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
+        ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).build();
 
         ImageServerMetadata metadata = server.getMetadata();
 
@@ -210,7 +210,7 @@ public class TestImgLib2ImageServer {
                 .preferredTileSize(1024, 1024)
                 .name(name)
                 .build();
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).name(name).build();
+        ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).name(name).build();
 
         ImageServerMetadata metadata = server.getMetadata();
 
@@ -226,7 +226,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).channels(channels)
+                () -> ImgLib2ImageServer.builder(accessibles).channels(channels)
         );
     }
 
@@ -237,7 +237,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).channels(channels)
+                () -> ImgLib2ImageServer.builder(accessibles).channels(channels)
         );
     }
 
@@ -248,7 +248,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).channels(channels)
+                () -> ImgLib2ImageServer.builder(accessibles).channels(channels)
         );
     }
 
@@ -273,7 +273,7 @@ public class TestImgLib2ImageServer {
                 .channels(channels)
                 .preferredTileSize(1024, 1024)
                 .build();
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).channels(channels).build();
+        ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).channels(channels).build();
 
         ImageServerMetadata metadata = server.getMetadata();
 
@@ -301,7 +301,7 @@ public class TestImgLib2ImageServer {
                 .channels(ImageChannel.getDefaultChannelList(2))
                 .preferredTileSize(tileWidth, tileHeight)
                 .build();
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles)
+        ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles)
                 .preferredTileSize(tileWidth, tileHeight)
                 .build();
 
@@ -319,7 +319,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).pixelCalibration(pixelCalibration)
+                () -> ImgLib2ImageServer.builder(accessibles).pixelCalibration(pixelCalibration)
         );
     }
 
@@ -348,7 +348,7 @@ public class TestImgLib2ImageServer {
                 .zSpacingMicrons(.5)
                 .timepoints(TimeUnit.DAYS, 1, 5.6)
                 .build();
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).pixelCalibration(pixelCalibration).build();
+        ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).pixelCalibration(pixelCalibration).build();
 
         ImageServerMetadata metadata = server.getMetadata();
 
@@ -364,7 +364,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+                () -> ImgLib2ImageServer.builder(accessibles).metadata(metadata)
         );
     }
 
@@ -378,7 +378,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+                () -> ImgLib2ImageServer.builder(accessibles).metadata(metadata)
         );
     }
 
@@ -390,7 +390,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+                () -> ImgLib2ImageServer.builder(accessibles).metadata(metadata)
         );
     }
 
@@ -402,7 +402,7 @@ public class TestImgLib2ImageServer {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new ImgLib2ImageServer.Builder<>(accessibles).metadata(metadata)
+                () -> ImgLib2ImageServer.builder(accessibles).metadata(metadata)
         );
     }
 
@@ -464,7 +464,7 @@ public class TestImgLib2ImageServer {
                 ))
                 .name("Image name")
                 .build();
-        ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).metadata(providedMetadata).build();
+        ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).metadata(providedMetadata).build();
 
         ImageServerMetadata metadata = server.getMetadata();
 
@@ -479,7 +479,7 @@ public class TestImgLib2ImageServer {
         void Check_Full_Resolution_Pixels() throws Exception {
             List<RandomAccessibleInterval<T>> accessibles = getAccessibles();
             BufferedImage expectedImage = getExpectedFullResolutionImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
+            ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server).updateT(1));
 
@@ -492,7 +492,7 @@ public class TestImgLib2ImageServer {
         void Check_Lowest_Resolution_Pixels() throws Exception {
             List<RandomAccessibleInterval<T>> accessibles = getAccessibles();
             BufferedImage expectedImage = getExpectedLowestResolutionImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
+            ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server, 2));
 
@@ -509,7 +509,7 @@ public class TestImgLib2ImageServer {
                     new long[] {1, 1, 0, 0, 1}
             ));
             BufferedImage expectedImage = getExpectedViewOfImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
+            ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
 
@@ -522,7 +522,7 @@ public class TestImgLib2ImageServer {
         void Check_Pixels_On_Big_Image() throws Exception {
             List<RandomAccessibleInterval<T>> accessibles = getBigAccessibles();
             BufferedImage expectedImage = getExpectedBigImage();
-            ImageServer<BufferedImage> server = new ImgLib2ImageServer.Builder<>(accessibles).build();
+            ImageServer<BufferedImage> server = ImgLib2ImageServer.builder(accessibles).build();
 
             BufferedImage image = server.readRegion(RegionRequest.createInstance(server));
 
