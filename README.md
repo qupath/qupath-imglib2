@@ -8,7 +8,7 @@ Here is a sample script that shows how to use the library from QuPath:
 
 ```groovy
 import qupath.ext.imglib2.ImgCreator
-import qupath.ext.imglib2.Dimension
+import qupath.ext.imglib2.ImgLib2ImageServer
 import net.imglib2.type.numeric.ARGBType
 
 
@@ -45,10 +45,15 @@ println safeImg
 // For example, to read the pixel located at [x:1, y:2; c:0; z:0; t:0]:
 var randomAccess = randomAccessible.randomAccess()
 
-var position = new long[Dimension.values().length]
-position[ImgCreator.getIndexOfDimension(Dimension.X)] = 1
-position[ImgCreator.getIndexOfDimension(Dimension.Y)] = 2
+var position = new long[ImgCreator.NUMBER_OF_AXES]
+position[ImgCreator.AXIS_X] = 1
+position[ImgCreator.AXIS_Y] = 2
 
 var pixel = randomAccess.setPositionAndGet(position)
 println pixel
+
+
+// It is also possible to create an ImageServer from a RandomAccessible or Img.
+var newServer = ImgLib2ImageServer.builder(List.of(randomAccessible)).build()
+println newServer
 ```
