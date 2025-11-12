@@ -53,7 +53,7 @@ var pixel = randomAccess.setPositionAndGet(position)
 println pixel
 
 
-// It is also possible to create an ImageServer from a RandomAccessible or Img.
+// It is also possible to create an ImageServer from a RandomAccessible or Img
 var newServer = ImgLib2ImageServer.builder(List.of(randomAccessible)).build()
 println newServer
 ```
