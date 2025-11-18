@@ -24,9 +24,9 @@ import qupath.ext.imglib2.bufferedimageaccesses.IntRasterAccess;
 import qupath.ext.imglib2.bufferedimageaccesses.ShortRasterAccess;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
+import qupath.lib.images.servers.PixelType;
 import qupath.lib.images.servers.ServerTools;
 import qupath.lib.images.servers.TileRequest;
-import qupath.lib.images.servers.PixelType;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -38,14 +38,14 @@ import java.util.function.Function;
 /**
  * A class to create {@link Img} or {@link RandomAccessibleInterval} from an {@link ImageServer}.
  * <p>
- * Use a {@link #builder(ImageServer)} or {@link #builder(ImageServer, NativeType)} to create an instance of this class.
+ * Use a {@link #builder(ImageServer)} or {@link #builder(ImageServer, NumericType)} to create an instance of this class.
  * <p>
  * This class is thread-safe.
  *
  * @param <T> the type of the returned accessibles
  * @param <A> the type contained in the input image
  */
-public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends SizableDataAccess> {
+public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
 
     /**
      * The index of the X axis of accessibles returned by functions of this class
@@ -89,14 +89,14 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
      * <p>
      * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
-     * returned accessibles of this class. It is recommended to use {@link #builder(ImageServer, NativeType)} instead.
+     * returned accessibles of this class. It is recommended to use {@link #builder(ImageServer, NumericType)} instead.
      *
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      * @param <T> the type of the output image
      */
-    public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server) {
+    public static <T extends NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server) {
         // Despite the potential warning, T is necessary, otherwise a cannot infer type arguments error occurs
         return new Builder<T>(server, getTypeOfServer(server));
     }
@@ -153,7 +153,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if the provided image
      * has less than one channel
      */
-    public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server, T type) {
+    public static <T extends NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server, T type) {
         return new Builder<>(server, type);
     }
 
@@ -183,26 +183,33 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
 
         List<TileRequest> tiles = new ArrayList<>(server.getTileRequestManager().getTileRequestsForLevel(level));
 
-        return new LazyCellImg<>(
-                new CellGrid(
-                        new long[] {
-                                server.getMetadata().getLevel(level).getWidth(),
-                                server.getMetadata().getLevel(level).getHeight(),
-                                numberOfChannels,
-                                server.nZSlices(),
-                                server.nTimepoints()
-                        },
-                        new int[] {
-                                server.getMetadata().getPreferredTileWidth(),
-                                server.getMetadata().getPreferredTileHeight(),
-                                numberOfChannels,
-                                1,
-                                1
-                        }
-                ),
-                type,
-                cellIndex -> cellCache.getCell(tiles.get(Math.toIntExact(cellIndex)), this::createCell)
-        );
+        if (type instanceof NativeType<?> nativeType) {
+            @SuppressWarnings("unchecked")
+            Img<T> img = new LazyCellImg<>(
+                    new CellGrid(
+                            new long[]{
+                                    server.getMetadata().getLevel(level).getWidth(),
+                                    server.getMetadata().getLevel(level).getHeight(),
+                                    numberOfChannels,
+                                    server.nZSlices(),
+                                    server.nTimepoints()
+                            },
+                            new int[]{
+                                    server.getMetadata().getPreferredTileWidth(),
+                                    server.getMetadata().getPreferredTileHeight(),
+                                    numberOfChannels,
+                                    1,
+                                    1
+                            }
+                    ),
+                    nativeType,
+                    cellIndex -> cellCache.getCell(tiles.get(Math.toIntExact(cellIndex)), this::createCell)
+            );
+            return img;
+        } else {
+            // Consider returning a 'non-lazy' image
+            throw new IllegalArgumentException("T should be an instance of NativeType");
+        }
     }
 
     /**
@@ -243,7 +250,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
      *
      * @param <T> the type of the returned accessibles of {@link ImgCreator} should have
      */
-    public static class Builder<T extends NativeType<T> & NumericType<T>> {
+    public static class Builder<T extends NumericType<T>> {
 
         private static final CellCache defaultCellCache = new CellCache((int) (Runtime.getRuntime().maxMemory() * 0.5 / (1024 * 1024)));
         private final ImageServer<BufferedImage> server;
@@ -372,7 +379,7 @@ public class ImgCreator<T extends NativeType<T> & NumericType<T>, A extends Siza
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends NativeType<T> & NumericType<T>> T getTypeOfServer(ImageServer<?> server) {
+    private static <T extends NumericType<T>> T getTypeOfServer(ImageServer<?> server) {
         if (server.isRGB()) {
             return (T) new ARGBType();
         }
