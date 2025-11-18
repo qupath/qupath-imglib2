@@ -24,7 +24,6 @@ import qupath.ext.imglib2.bufferedimageaccesses.IntRasterAccess;
 import qupath.ext.imglib2.bufferedimageaccesses.ShortRasterAccess;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
-import qupath.lib.images.servers.PixelType;
 import qupath.lib.images.servers.ServerTools;
 import qupath.lib.images.servers.TileRequest;
 
@@ -38,14 +37,13 @@ import java.util.function.Function;
 /**
  * A class to create {@link Img} or {@link RandomAccessibleInterval} from an {@link ImageServer}.
  * <p>
- * Use a {@link #builder(ImageServer)} or {@link #builder(ImageServer, NumericType)} to create an instance of this class.
+ * Use a {@link #builder(ImageServer)} or {@link #builder(ImageServer)} to create an instance of this class.
  * <p>
  * This class is thread-safe.
  *
- * @param <T> the type of the returned accessibles
  * @param <A> the type contained in the input image
  */
-public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
+public class ImgCreator<A extends SizableDataAccess> {
 
     /**
      * The index of the X axis of accessibles returned by functions of this class
@@ -72,14 +70,12 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
      */
     public static final int NUMBER_OF_AXES = 5;
     private final ImageServer<BufferedImage> server;
-    private final T type;
     private final CellCache cellCache;
     private final Function<BufferedImage, A> cellCreator;
     private final int numberOfChannels;
 
-    private ImgCreator(Builder<T> builder, Function<BufferedImage, A> cellCreator) {
+    private ImgCreator(Builder builder, Function<BufferedImage, A> cellCreator) {
         this.server = builder.server;
-        this.type = builder.type;
         this.cellCache = builder.cellCache;
         this.cellCreator = cellCreator;
         this.numberOfChannels = server.isRGB() ? 1 : server.nChannels();
@@ -87,74 +83,14 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
 
     /**
      * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
-     * <p>
-     * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
-     * returned accessibles of this class. It is recommended to use {@link #builder(ImageServer, NumericType)} instead.
      *
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
-     * @param <T> the type of the output image
      */
-    public static <T extends NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server) {
+    public static Builder builder(ImageServer<BufferedImage> server) {
         // Despite the potential warning, T is necessary, otherwise a cannot infer type arguments error occurs
-        return new Builder<T>(server, getTypeOfServer(server));
-    }
-
-    /**
-     * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
-     * <p>
-     * The provided type must be compatible with the input image:
-     * <ul>
-     *     <li>If the input image is {@link ImageServer#isRGB() RGB}, the type must be {@link ARGBType}.</li>
-     *     <li>
-     *         Else:
-     *         <ul>
-     *             <li>
-     *                 If the input image has the {@link PixelType#UINT8} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link UnsignedByteType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#INT8} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link ByteType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#UINT16} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link UnsignedShortType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#INT16} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link ShortType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#UINT32} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link UnsignedIntType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#INT32} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link IntType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#FLOAT32} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link FloatType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#FLOAT64} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link DoubleType}.
-     *             </li>
-     *         </ul>
-     *     </li>
-     * </ul>
-     *
-     * @param server the input image
-     * @param type the expected type of the output image
-     * @return a builder to create an instance of this class
-     * @param <T> the type corresponding to the provided image
-     * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if the provided image
-     * has less than one channel
-     */
-    public static <T extends NumericType<T>> Builder<T> builder(ImageServer<BufferedImage> server, T type) {
-        return new Builder<>(server, type);
+        return new Builder(server);
     }
 
     /**
@@ -171,8 +107,9 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
      * @param level the level to consider
      * @return an {@link Img} corresponding to the provided level of the input image
      * @throws IllegalArgumentException if the provided level does not match with a level of the input image
+     * @param <T> Generic parameter for the image type.
      */
-    public Img<T> createForLevel(int level) {
+    public <T extends NumericType<T> & NativeType<T>> Img<T> createForLevel(int level) {
         if (level < 0 || level >= server.getMetadata().nLevels()) {
             throw new IllegalArgumentException(String.format(
                     "The provided level %d is not within 0 and %d",
@@ -183,33 +120,27 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
 
         List<TileRequest> tiles = new ArrayList<>(server.getTileRequestManager().getTileRequestsForLevel(level));
 
-        if (type instanceof NativeType<?> nativeType) {
-            @SuppressWarnings("unchecked")
-            Img<T> img = new LazyCellImg<>(
-                    new CellGrid(
-                            new long[]{
-                                    server.getMetadata().getLevel(level).getWidth(),
-                                    server.getMetadata().getLevel(level).getHeight(),
-                                    numberOfChannels,
-                                    server.nZSlices(),
-                                    server.nTimepoints()
-                            },
-                            new int[]{
-                                    server.getMetadata().getPreferredTileWidth(),
-                                    server.getMetadata().getPreferredTileHeight(),
-                                    numberOfChannels,
-                                    1,
-                                    1
-                            }
-                    ),
-                    nativeType,
-                    cellIndex -> cellCache.getCell(tiles.get(Math.toIntExact(cellIndex)), this::createCell)
-            );
-            return img;
-        } else {
-            // Consider returning a 'non-lazy' image
-            throw new IllegalArgumentException("T should be an instance of NativeType");
-        }
+        T type = getTypeOfServer(server);
+        return new LazyCellImg<>(
+                new CellGrid(
+                        new long[]{
+                                server.getMetadata().getLevel(level).getWidth(),
+                                server.getMetadata().getLevel(level).getHeight(),
+                                numberOfChannels,
+                                server.nZSlices(),
+                                server.nTimepoints()
+                        },
+                        new int[]{
+                                server.getMetadata().getPreferredTileWidth(),
+                                server.getMetadata().getPreferredTileHeight(),
+                                numberOfChannels,
+                                1,
+                                1
+                        }
+                ),
+                type,
+                cellIndex -> cellCache.getCell(tiles.get(Math.toIntExact(cellIndex)), this::createCell)
+        );
     }
 
     /**
@@ -230,41 +161,37 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
      * @param downsample the downsample to apply to the input image. Must be greater than 0
      * @return a {@link RandomAccessibleInterval} corresponding to the input image with the provided downsample applied
      * @throws IllegalArgumentException if the provided downsample is not greater than 0
+     * @param <T> Generic parameter for the image type.
      */
-    public RandomAccessibleInterval<T> createForDownsample(double downsample) {
+    public <T extends NumericType<T> & NativeType<T>> RandomAccessibleInterval<T> createForDownsample(double downsample) {
         if (downsample <= 0) {
             throw new IllegalArgumentException(String.format("The provided downsample %f is not greater than 0", downsample));
         }
 
         int level = ServerTools.getPreferredResolutionLevel(server, downsample);
+        Img<T> img = createForLevel(level);
 
         if (server.getMetadata().getChannelType() == ImageServerMetadata.ChannelType.CLASSIFICATION) {
-            return AccessibleScaler.scaleWithNearestNeighborInterpolation(createForLevel(level), server.getDownsampleForResolution(level) / downsample);
+            return AccessibleScaler.scaleWithNearestNeighborInterpolation(img, server.getDownsampleForResolution(level) / downsample);
         } else {
-            return AccessibleScaler.scaleWithLinearInterpolation(createForLevel(level), server.getDownsampleForResolution(level) / downsample);
+            return AccessibleScaler.scaleWithLinearInterpolation(img, server.getDownsampleForResolution(level) / downsample);
         }
     }
 
     /**
      * A builder to create an instance of {@link ImgCreator}.
-     *
-     * @param <T> the type of the returned accessibles of {@link ImgCreator} should have
      */
-    public static class Builder<T extends NumericType<T>> {
+    public static class Builder {
 
         private static final CellCache defaultCellCache = new CellCache((int) (Runtime.getRuntime().maxMemory() * 0.5 / (1024 * 1024)));
         private final ImageServer<BufferedImage> server;
-        private final T type;
         private CellCache cellCache = defaultCellCache;
 
-        private Builder(ImageServer<BufferedImage> server, T type) {
-            checkType(server, type);
+        private Builder(ImageServer<BufferedImage> server) {
             if (server.nChannels() <= 0) {
                 throw new IllegalArgumentException(String.format("The provided image has less than one channel (%d)", server.nChannels()));
             }
-
             this.server = server;
-            this.type = type;
         }
 
         /**
@@ -275,7 +202,7 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
          * @return this builder
          * @throws NullPointerException if the provided cache is null
          */
-        public Builder<T> cellCache(CellCache cellCache) {
+        public Builder cellCache(CellCache cellCache) {
             this.cellCache = Objects.requireNonNull(cellCache);
             return this;
         }
@@ -285,7 +212,7 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
          *
          * @return a new instance of {@link ImgCreator}
          */
-        public ImgCreator<T, ?> build() {
+        public ImgCreator<?> build() {
             if (server.isRGB()) {
                 return new ImgCreator<>(this, ArgbBufferedImageAccess::new);
             } else {
@@ -298,88 +225,11 @@ public class ImgCreator<T extends NumericType<T>, A extends SizableDataAccess> {
                 };
             }
         }
-
-        private static <T> void checkType(ImageServer<?> server, T type) {
-            if (server.isRGB()) {
-                if (!(type instanceof ARGBType)) {
-                    throw new IllegalArgumentException(String.format(
-                            "The provided type %s is not an ARGBType, which is the one expected for RGB images",
-                            type
-                    ));
-                }
-            } else {
-                switch (server.getPixelType()) {
-                    case UINT8 -> {
-                        if (!(type instanceof UnsignedByteType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a ByteType, which is the one expected for non-RGB UINT8 images",
-                                    type
-                            ));
-                        }
-                    }
-                    case INT8 -> {
-                        if (!(type instanceof ByteType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a UnsignedByteType, which is the one expected for non-RGB INT8 images",
-                                    type
-                            ));
-                        }
-                    }
-                    case UINT16 -> {
-                        if (!(type instanceof UnsignedShortType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a UnsignedShortType, which is the one expected for non-RGB UINT16 images",
-                                    type
-                            ));
-                        }
-                    }
-                    case INT16 -> {
-                        if (!(type instanceof ShortType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a ShortType, which is the one expected for non-RGB INT16 images",
-                                    type
-                            ));
-                        }
-                    }
-                    case UINT32 -> {
-                        if (!(type instanceof UnsignedIntType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a UnsignedIntType, which is the one expected for non-RGB UINT32 images",
-                                    type
-                            ));
-                        }
-                    }
-                    case INT32 -> {
-                        if (!(type instanceof IntType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a IntType, which is the one expected for non-RGB INT32 images",
-                                    type
-                            ));
-                        }
-                    }
-                    case FLOAT32 -> {
-                        if (!(type instanceof FloatType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a FloatType, which is the one expected for non-RGB FLOAT32 images",
-                                    type
-                            ));
-                        }
-                    }
-                    case FLOAT64 -> {
-                        if (!(type instanceof DoubleType)) {
-                            throw new IllegalArgumentException(String.format(
-                                    "The provided type %s is not a DoubleType, which is the one expected for non-RGB FLOAT64 images",
-                                    type
-                            ));
-                        }
-                    }
-                }
-            }
-        }
+        
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends NumericType<T>> T getTypeOfServer(ImageServer<?> server) {
+    private static <T extends NumericType<T> & NativeType<T>> T getTypeOfServer(ImageServer<?> server) {
         if (server.isRGB()) {
             return (T) new ARGBType();
         }

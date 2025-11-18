@@ -96,6 +96,8 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
      * if the provided accessibles do not have {@link ImgCreator#NUMBER_OF_AXES} axes, if the provided accessibles
      * do not have the same number of channels, z-stacks, or timepoints, or if the accessible type is {@link ARGBType}
      * and the number of channels of the accessibles is not 1
+     * @return the builder
+     * @param <T> Generic parameter for the image type.
      */
     public static <T extends NativeType<T> & NumericType<T>> Builder<T> builder(List<? extends RandomAccessibleInterval<T>> accessibles) {
         return new Builder<>(accessibles);
