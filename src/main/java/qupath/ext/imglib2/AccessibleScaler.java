@@ -9,7 +9,6 @@ import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.RealViews;
 import net.imglib2.realtransform.Scale2D;
 import net.imglib2.realtransform.Translation2D;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
 
@@ -40,7 +39,7 @@ public class AccessibleScaler {
      * @throws IllegalArgumentException if the input interval has at least one minimum different from 0, if the provided scale is less
      * than or equal to 0, or if the input interval has less than two dimensions
      */
-    public static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T> scaleWithLinearInterpolation(
+    public static <T extends NumericType<T>> RandomAccessibleInterval<T> scaleWithLinearInterpolation(
             RandomAccessibleInterval<T> input,
             double scale
     ) {
@@ -59,7 +58,7 @@ public class AccessibleScaler {
      * @throws IllegalArgumentException if the input interval has at least one minimum different from 0, if the provided scale is less
      * than or equal to 0, or if the input interval has less than two dimensions
      */
-    public static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T> scaleWithNearestNeighborInterpolation(
+    public static <T extends NumericType<T>> RandomAccessibleInterval<T> scaleWithNearestNeighborInterpolation(
             RandomAccessibleInterval<T> input,
             double scale
     ) {
@@ -79,7 +78,7 @@ public class AccessibleScaler {
      * @throws IllegalArgumentException if the input interval has at least one minimum different from 0, if the provided scale is less
      * than or equal to 0, or if the input interval has less than two dimensions
      */
-    public static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T> scale(
+    public static <T extends NumericType<T>> RandomAccessibleInterval<T> scale(
             RandomAccessibleInterval<T> input,
             double scale,
             InterpolatorFactory<T, RandomAccessible<T>> interpolatorFactory
@@ -104,7 +103,7 @@ public class AccessibleScaler {
         }
     }
 
-    private static <T extends NativeType<T> & NumericType<T>> RandomAccessibleInterval<T> scaleWithoutChecks(
+    private static <T extends NumericType<T>> RandomAccessibleInterval<T> scaleWithoutChecks(
             RandomAccessibleInterval<T> input,
             double scale,
             Scale2D scale2D,
