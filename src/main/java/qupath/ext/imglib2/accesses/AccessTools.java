@@ -1,4 +1,4 @@
-package qupath.ext.imglib2.bufferedimageaccesses;
+package qupath.ext.imglib2.accesses;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

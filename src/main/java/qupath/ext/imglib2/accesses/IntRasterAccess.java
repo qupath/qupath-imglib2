@@ -1,22 +1,22 @@
-package qupath.ext.imglib2.bufferedimageaccesses;
+package qupath.ext.imglib2.accesses;
 
-import net.imglib2.img.basictypeaccess.FloatAccess;
+import net.imglib2.img.basictypeaccess.IntAccess;
 import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferFloat;
+import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 
 /**
- * A {@link FloatAccess} whose elements are computed from a {@link Raster}.
+ * An {@link IntAccess} whose elements are computed from a {@link Raster}.
  * <p>
- * This {@link FloatAccess} is immutable; any attempt to changes its values will result in a
+ * This {@link IntAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  * <p>
  * This data access is marked as volatile but always contain valid data.
  */
-public class FloatRasterAccess implements FloatAccess, SizableDataAccess, VolatileAccess {
+public class IntRasterAccess implements IntAccess, SizableDataAccess, VolatileAccess {
 
     private final Raster raster;
     private final DataBuffer dataBuffer;
@@ -26,38 +26,38 @@ public class FloatRasterAccess implements FloatAccess, SizableDataAccess, Volati
     private final int size;
 
     /**
-     * Create the float raster access.
+     * Create the int raster access.
      *
-     * @param raster the raster containing the values to return. Its pixels are expected to be stored in the float format
+     * @param raster the raster containing the values to return. Its pixels are expected to be stored in the int format
      * @throws NullPointerException if the provided image is null
      */
-    public FloatRasterAccess(Raster raster) {
+    public IntRasterAccess(Raster raster) {
         this.raster = raster;
         this.dataBuffer = this.raster.getDataBuffer();
 
         this.width = this.raster.getWidth();
         this.planeSize = width * this.raster.getHeight();
 
-        this.canUseDataBuffer = this.dataBuffer instanceof DataBufferFloat &&
+        this.canUseDataBuffer = this.dataBuffer instanceof DataBufferInt &&
                 AccessTools.isSampleModelDirectlyUsable(this.raster);
 
         this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
     }
 
     @Override
-    public float getValue(int index) {
+    public int getValue(int index) {
         int b = index / planeSize;
         int xyIndex = index % planeSize;
 
         if (canUseDataBuffer) {
-            return dataBuffer.getElemFloat(b, xyIndex);
+            return dataBuffer.getElem(b, xyIndex);
         } else {
-            return raster.getSampleFloat(xyIndex % width, xyIndex / width, b);
+            return raster.getSample(xyIndex % width, xyIndex / width, b);
         }
     }
 
     @Override
-    public void setValue(int index, float value) {
+    public void setValue(int index, int value) {
         throw new UnsupportedOperationException("This access is not mutable");
     }
 
