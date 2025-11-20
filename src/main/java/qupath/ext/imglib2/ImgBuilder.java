@@ -244,7 +244,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      *
      * @return a list of {@link RandomAccessibleInterval} corresponding to each level of the input image
      */
-    public List<? extends RandomAccessibleInterval<T>> buildForAllLevels() {
+    public List<RandomAccessibleInterval<T>> buildForAllLevels() {
         return IntStream.range(0, server.getMetadata().nLevels())
                 .mapToObj(this::buildForLevel)
                 .toList();
@@ -265,7 +265,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @return an {@link Img} corresponding to the provided level of the input image
      * @throws IllegalArgumentException if the provided level does not match with a level of the input image
      */
-    public Img<T> buildForLevel(int level) {
+    public RandomAccessibleInterval<T> buildForLevel(int level) {
         if (level < 0 || level >= server.getMetadata().nLevels()) {
             throw new IllegalArgumentException(String.format(
                     "The provided level %d is not within 0 and %d",
@@ -318,7 +318,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * applied. The ith returned {@link RandomAccessibleInterval} corresponds to the ith provided downsample
      * @throws IllegalArgumentException if one of the provided downsamples is not greater than 0
      */
-    public List<? extends RandomAccessibleInterval<T>> buildForDownsamples(List<Double> downsamples) {
+    public List<RandomAccessibleInterval<T>> buildForDownsamples(List<Double> downsamples) {
         return downsamples.stream()
                 .map(this::buildForDownsample)
                 .toList();
