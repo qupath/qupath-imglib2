@@ -198,8 +198,8 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @param type the expected type of the output image
      * @return a builder to create an instance of this class
      * @param <T> the type corresponding to the provided image
-     * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if the provided image
-     * has less than one channel
+     * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
+     * the provided image has less than one channel
      */
     public static <T extends NativeType<T> & NumericType<T>> ImgBuilder<T, ?> createBuilder(ImageServer<BufferedImage> server, T type) {
         checkType(server, type);
@@ -218,8 +218,9 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
     }
 
     /**
-     * Accessibles returned by this class will be divided into cells, which will be cached to gain performance. This function sets the
-     * cache to use. By default, a static cache of maximal size half the amount of the {@link Runtime#maxMemory() max memory} is used.
+     * Accessibles returned by this class will be divided into cells, which will be cached to gain performance. This
+     * function sets the cache to use. By default, a static cache of maximal size half the amount of the
+     * {@link Runtime#maxMemory() max memory} is used.
      *
      * @param cellCache the cache to use
      * @return this builder
@@ -298,10 +299,36 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
     }
 
     /**
+     * Create a list of {@link RandomAccessibleInterval} from the input image and the provided downsamples.
+     * <p>
+     * The {@link RandomAccessibleInterval} returned by this class are immutable. This means that any attempt to write
+     * data to them will result in an {@link UnsupportedOperationException}.
+     * <p>
+     * See {@link #AXIS_X}, {@link #AXIS_Y}, {@link #AXIS_CHANNEL}, {@link #AXIS_Z}, and {@link #AXIS_TIME} to get the physical
+     * interpretation of the dimensions of the returned {@link RandomAccessibleInterval}.
+     * <p>
+     * Values of the returned images are lazily fetched.
+     * <p>
+     * If the input image has to be scaled and its {@link ImageServerMetadata#getChannelType() channel type} is
+     * {@link ImageServerMetadata.ChannelType#CLASSIFICATION}, then the nearest neighbor interpolation is used.
+     * Otherwise, the linear interpolation is used.
+     *
+     * @param downsamples the downsamples to apply to the input image. Must be greater than 0
+     * @return a list of {@link RandomAccessibleInterval} corresponding to the input image with the provided downsamples
+     * applied. The ith returned {@link RandomAccessibleInterval} corresponds to the ith provided downsample
+     * @throws IllegalArgumentException if one of the provided downsamples is not greater than 0
+     */
+    public List<? extends RandomAccessibleInterval<T>> buildForDownsamples(List<Double> downsamples) {
+        return downsamples.stream()
+                .map(this::buildForDownsample)
+                .toList();
+    }
+
+    /**
      * Create a {@link RandomAccessibleInterval} from the input image and the provided downsample.
      * <p>
-     * The {@link RandomAccessibleInterval} returned by this class is immutable. This means that any attempt to write data to it will result in an
-     * {@link UnsupportedOperationException}.
+     * The {@link RandomAccessibleInterval} returned by this class is immutable. This means that any attempt to write
+     * data to it will result in an {@link UnsupportedOperationException}.
      * <p>
      * See {@link #AXIS_X}, {@link #AXIS_Y}, {@link #AXIS_CHANNEL}, {@link #AXIS_Z}, and {@link #AXIS_TIME} to get the physical
      * interpretation of the dimensions of the returned {@link RandomAccessibleInterval}.
@@ -324,9 +351,15 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         int level = ServerTools.getPreferredResolutionLevel(server, downsample);
 
         if (server.getMetadata().getChannelType() == ImageServerMetadata.ChannelType.CLASSIFICATION) {
-            return AccessibleScaler.scaleWithNearestNeighborInterpolation(buildForLevel(level), server.getDownsampleForResolution(level) / downsample);
+            return AccessibleScaler.scaleWithNearestNeighborInterpolation(
+                    buildForLevel(level),
+                    server.getDownsampleForResolution(level) / downsample
+            );
         } else {
-            return AccessibleScaler.scaleWithLinearInterpolation(buildForLevel(level), server.getDownsampleForResolution(level) / downsample);
+            return AccessibleScaler.scaleWithLinearInterpolation(
+                    buildForLevel(level),
+                    server.getDownsampleForResolution(level) / downsample
+            );
         }
     }
 
