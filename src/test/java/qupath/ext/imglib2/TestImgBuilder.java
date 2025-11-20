@@ -44,7 +44,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.UINT8;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<ARGBType> img = ImgBuilder.create(imageServer, new ARGBType()).createForLevel(0);
+        Img<ARGBType> img = ImgBuilder.createBuilder(imageServer, new ARGBType()).buildForLevel(0);
 
         Utils.assertArgbRandomAccessibleEquals(img, (x, y, channel, z, t) -> ARGBType.rgba(255, 0, 0, 0), 1);
 
@@ -57,7 +57,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.UINT8;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<UnsignedByteType> img = ImgBuilder.create(imageServer, new UnsignedByteType()).createForLevel(0);
+        Img<UnsignedByteType> img = ImgBuilder.createBuilder(imageServer, new UnsignedByteType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -70,7 +70,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.INT8;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<ByteType> img = ImgBuilder.create(imageServer, new ByteType()).createForLevel(0);
+        Img<ByteType> img = ImgBuilder.createBuilder(imageServer, new ByteType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -83,7 +83,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.UINT16;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<UnsignedShortType> img = ImgBuilder.create(imageServer, new UnsignedShortType()).createForLevel(0);
+        Img<UnsignedShortType> img = ImgBuilder.createBuilder(imageServer, new UnsignedShortType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -96,7 +96,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.INT16;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<ShortType> img = ImgBuilder.create(imageServer, new ShortType()).createForLevel(0);
+        Img<ShortType> img = ImgBuilder.createBuilder(imageServer, new ShortType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -109,7 +109,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.UINT32;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<UnsignedIntType> img = ImgBuilder.create(imageServer, new UnsignedIntType()).createForLevel(0);
+        Img<UnsignedIntType> img = ImgBuilder.createBuilder(imageServer, new UnsignedIntType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -122,7 +122,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.INT32;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<IntType> img = ImgBuilder.create(imageServer, new IntType()).createForLevel(0);
+        Img<IntType> img = ImgBuilder.createBuilder(imageServer, new IntType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -135,7 +135,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.FLOAT32;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<FloatType> img = ImgBuilder.create(imageServer, new FloatType()).createForLevel(0);
+        Img<FloatType> img = ImgBuilder.createBuilder(imageServer, new FloatType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -148,7 +148,7 @@ public class TestImgBuilder {
         PixelType pixelType = PixelType.FLOAT64;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
 
-        Img<DoubleType> img = ImgBuilder.create(imageServer, new DoubleType()).createForLevel(0);
+        Img<DoubleType> img = ImgBuilder.createBuilder(imageServer, new DoubleType()).buildForLevel(0);
 
         Utils.assertRandomAccessibleEquals(img, (x, y, channel, z, t) -> 1, 1);
 
@@ -159,7 +159,7 @@ public class TestImgBuilder {
     void Check_X_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getWidth();
-        Img<?> img = ImgBuilder.create(imageServer).createForLevel(0);
+        Img<?> img = ImgBuilder.createBuilder(imageServer).buildForLevel(0);
         int dimensionIndex = ImgBuilder.AXIS_X;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
@@ -171,7 +171,7 @@ public class TestImgBuilder {
     void Check_Y_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getHeight();
-        Img<?> img = ImgBuilder.create(imageServer).createForLevel(0);
+        Img<?> img = ImgBuilder.createBuilder(imageServer).buildForLevel(0);
         int dimensionIndex = ImgBuilder.AXIS_Y;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
@@ -183,7 +183,7 @@ public class TestImgBuilder {
     void Check_Channel_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.nChannels();
-        Img<?> img = ImgBuilder.create(imageServer).createForLevel(0);
+        Img<?> img = ImgBuilder.createBuilder(imageServer).buildForLevel(0);
         int dimensionIndex = ImgBuilder.AXIS_CHANNEL;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
@@ -195,7 +195,7 @@ public class TestImgBuilder {
     void Check_Z_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getMetadata().getSizeZ();
-        Img<?> img = ImgBuilder.create(imageServer).createForLevel(0);
+        Img<?> img = ImgBuilder.createBuilder(imageServer).buildForLevel(0);
         int dimensionIndex = ImgBuilder.AXIS_Z;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
@@ -207,7 +207,7 @@ public class TestImgBuilder {
     void Check_Time_Dimension_Size() throws Exception {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         int expectedSize = imageServer.getMetadata().getSizeT();
-        Img<?> img = ImgBuilder.create(imageServer).createForLevel(0);
+        Img<?> img = ImgBuilder.createBuilder(imageServer).buildForLevel(0);
         int dimensionIndex = ImgBuilder.AXIS_TIME;
 
         Assertions.assertEquals(expectedSize, img.dimension(dimensionIndex));
@@ -221,7 +221,7 @@ public class TestImgBuilder {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         double downsample = imageServer.getDownsampleForResolution(level);
 
-        Img<DoubleType> img = ImgBuilder.create(imageServer, new DoubleType()).createForLevel(level);
+        Img<DoubleType> img = ImgBuilder.createBuilder(imageServer, new DoubleType()).buildForLevel(level);
 
         Utils.assertRandomAccessibleEquals(img, ComplexDoubleImageServer::getPixel, downsample);
 
@@ -234,7 +234,7 @@ public class TestImgBuilder {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         double downsample = imageServer.getDownsampleForResolution(level);
 
-        Img<DoubleType> img = ImgBuilder.create(imageServer, new DoubleType()).createForLevel(level);
+        Img<DoubleType> img = ImgBuilder.createBuilder(imageServer, new DoubleType()).buildForLevel(level);
 
         Utils.assertRandomAccessibleEquals(img, ComplexDoubleImageServer::getPixel, downsample);
 
@@ -247,7 +247,7 @@ public class TestImgBuilder {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         double downsample = imageServer.getDownsampleForResolution(level);
 
-        RandomAccessibleInterval<DoubleType> img = ImgBuilder.create(imageServer, new DoubleType()).createForDownsample(downsample);
+        RandomAccessibleInterval<DoubleType> img = ImgBuilder.createBuilder(imageServer, new DoubleType()).buildForDownsample(downsample);
 
         Utils.assertRandomAccessibleEquals(img, ComplexDoubleImageServer::getPixel, downsample);
 
@@ -260,7 +260,7 @@ public class TestImgBuilder {
         ImageServer<BufferedImage> imageServer = new ComplexDoubleImageServer();
         double downsample = imageServer.getDownsampleForResolution(level);
 
-        RandomAccessibleInterval<DoubleType> img = ImgBuilder.create(imageServer, new DoubleType()).createForDownsample(downsample);
+        RandomAccessibleInterval<DoubleType> img = ImgBuilder.createBuilder(imageServer, new DoubleType()).buildForDownsample(downsample);
 
         Utils.assertRandomAccessibleEquals(img, ComplexDoubleImageServer::getPixel, downsample);
 

@@ -39,7 +39,7 @@ import java.util.stream.IntStream;
 /**
  * A class to create {@link Img} or {@link RandomAccessibleInterval} from an {@link ImageServer}.
  * <p>
- * Use a {@link #create(ImageServer)} or {@link #create(ImageServer, NativeType)} to create an instance of this class.
+ * Use a {@link #createBuilder(ImageServer)} or {@link #createBuilder(ImageServer, NativeType)} to create an instance of this class.
  * <p>
  * This class is thread-safe.
  *
@@ -94,13 +94,13 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
      * <p>
      * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
-     * returned accessibles of this class. It is recommended to use {@link #create(ImageServer, NativeType)} instead.
+     * returned accessibles of this class. It is recommended to use {@link #createBuilder(ImageServer, NativeType)} instead.
      *
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static ImgBuilder<?, ?> create(ImageServer<BufferedImage> server) {
+    public static ImgBuilder<?, ?> createBuilder(ImageServer<BufferedImage> server) {
         if (server.isRGB()) {
             return new ImgBuilder<>(server, new ARGBType(), ArgbBufferedImageAccess::new);
         } else {
@@ -201,7 +201,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if the provided image
      * has less than one channel
      */
-    public static <T extends NativeType<T> & NumericType<T>> ImgBuilder<T, ?> create(ImageServer<BufferedImage> server, T type) {
+    public static <T extends NativeType<T> & NumericType<T>> ImgBuilder<T, ?> createBuilder(ImageServer<BufferedImage> server, T type) {
         checkType(server, type);
 
         if (server.isRGB()) {
@@ -245,7 +245,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      */
     public List<? extends RandomAccessibleInterval<T>> buildForAllLevels() {
         return IntStream.range(0, server.getMetadata().nLevels())
-                .mapToObj(this::createForLevel)
+                .mapToObj(this::buildForLevel)
                 .toList();
     }
 
@@ -264,7 +264,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @return an {@link Img} corresponding to the provided level of the input image
      * @throws IllegalArgumentException if the provided level does not match with a level of the input image
      */
-    public Img<T> createForLevel(int level) {
+    public Img<T> buildForLevel(int level) {
         if (level < 0 || level >= server.getMetadata().nLevels()) {
             throw new IllegalArgumentException(String.format(
                     "The provided level %d is not within 0 and %d",
@@ -316,7 +316,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @return a {@link RandomAccessibleInterval} corresponding to the input image with the provided downsample applied
      * @throws IllegalArgumentException if the provided downsample is not greater than 0
      */
-    public RandomAccessibleInterval<T> createForDownsample(double downsample) {
+    public RandomAccessibleInterval<T> buildForDownsample(double downsample) {
         if (downsample <= 0) {
             throw new IllegalArgumentException(String.format("The provided downsample %f is not greater than 0", downsample));
         }
@@ -324,9 +324,9 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         int level = ServerTools.getPreferredResolutionLevel(server, downsample);
 
         if (server.getMetadata().getChannelType() == ImageServerMetadata.ChannelType.CLASSIFICATION) {
-            return AccessibleScaler.scaleWithNearestNeighborInterpolation(createForLevel(level), server.getDownsampleForResolution(level) / downsample);
+            return AccessibleScaler.scaleWithNearestNeighborInterpolation(buildForLevel(level), server.getDownsampleForResolution(level) / downsample);
         } else {
-            return AccessibleScaler.scaleWithLinearInterpolation(createForLevel(level), server.getDownsampleForResolution(level) / downsample);
+            return AccessibleScaler.scaleWithLinearInterpolation(buildForLevel(level), server.getDownsampleForResolution(level) / downsample);
         }
     }
 
