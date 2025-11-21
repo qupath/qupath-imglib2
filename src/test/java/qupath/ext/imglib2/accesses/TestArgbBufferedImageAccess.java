@@ -1,4 +1,4 @@
-package qupath.ext.imglib2.bufferedimageaccesses;
+package qupath.ext.imglib2.accesses;
 
 import net.imglib2.img.basictypeaccess.IntAccess;
 import net.imglib2.type.numeric.ARGBType;
