@@ -7,7 +7,7 @@ A Java library to link QuPath with ImgLib2.
 Here is a sample script that shows how to use the library from QuPath:
 
 ```groovy
-import qupath.ext.imglib2.ImgCreator
+import qupath.ext.imglib2.ImgBuilder
 import qupath.ext.imglib2.ImgLib2ImageServer
 import net.imglib2.type.numeric.ARGBType
 
@@ -16,13 +16,13 @@ var server = getCurrentServer()
 
 // Create Img<T> from level
 var level = 0
-var img = ImgCreator.builder(server).build().createForLevel(level)
+var img = ImgBuilder.createBuilder(server).build().createForLevel(level)
 println img
 
 
 // Create RandomAccessibleInterval<T> from downsample
 var downsample = 1
-var randomAccessible = ImgCreator.builder(server).build().createForDownsample(downsample)
+var randomAccessible = ImgBuilder.createBuilder(server).build().createForDownsample(downsample)
 println randomAccessible
 
 
@@ -37,7 +37,7 @@ var type = new ARGBType()   // only valid if server represents a RGB image. Othe
                             // net.imglib2.type.numeric.integer.IntType for INT32 images
                             // net.imglib2.type.numeric.real.FloatType for FLOAT32 images
                             // net.imglib2.type.numeric.real.DoubleType for FLOAT64 images
-var safeImg = ImgCreator.builder(server, type).build().createForLevel(level)
+var safeImg = ImgBuilder.createBuilder(server, type).build().createForLevel(level)
 println safeImg
 
 
@@ -45,9 +45,9 @@ println safeImg
 // For example, to read the pixel located at [x:1, y:2; c:0; z:0; t:0]:
 var randomAccess = randomAccessible.randomAccess()
 
-var position = new long[ImgCreator.NUMBER_OF_AXES]
-position[ImgCreator.AXIS_X] = 1
-position[ImgCreator.AXIS_Y] = 2
+var position = new long[ImgBuilder.NUMBER_OF_AXES]
+position[ImgBuilder.AXIS_X] = 1
+position[ImgBuilder.AXIS_Y] = 2
 
 var pixel = randomAccess.setPositionAndGet(position)
 println pixel

@@ -62,11 +62,11 @@ public class Utils {
 
             cursor.localize(position);
             int index = Math.toIntExact(
-                    position[ImgCreator.AXIS_X] +
-                            position[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_X] +
-                            position[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] +
-                            position[ImgCreator.AXIS_Z] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] +
-                            position[ImgCreator.AXIS_TIME] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_Z]
+                    position[ImgBuilder.AXIS_X] +
+                            position[ImgBuilder.AXIS_Y] * dimensions[ImgBuilder.AXIS_X] +
+                            position[ImgBuilder.AXIS_CHANNEL] * dimensions[ImgBuilder.AXIS_X] * dimensions[ImgBuilder.AXIS_Y] +
+                            position[ImgBuilder.AXIS_Z] * dimensions[ImgBuilder.AXIS_X] * dimensions[ImgBuilder.AXIS_Y] * dimensions[ImgBuilder.AXIS_CHANNEL] +
+                            position[ImgBuilder.AXIS_TIME] * dimensions[ImgBuilder.AXIS_X] * dimensions[ImgBuilder.AXIS_Y] * dimensions[ImgBuilder.AXIS_CHANNEL] * dimensions[ImgBuilder.AXIS_Z]
             );
 
             value.setReal(pixels[index]);
@@ -85,11 +85,11 @@ public class Utils {
 
             cursor.localize(position);
             int index = Math.toIntExact(
-                    position[ImgCreator.AXIS_X] +
-                            position[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_X] +
-                            position[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] +
-                            position[ImgCreator.AXIS_Z] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] +
-                            position[ImgCreator.AXIS_TIME] * dimensions[ImgCreator.AXIS_X] * dimensions[ImgCreator.AXIS_Y] * dimensions[ImgCreator.AXIS_CHANNEL] * dimensions[ImgCreator.AXIS_Z]
+                    position[ImgBuilder.AXIS_X] +
+                            position[ImgBuilder.AXIS_Y] * dimensions[ImgBuilder.AXIS_X] +
+                            position[ImgBuilder.AXIS_CHANNEL] * dimensions[ImgBuilder.AXIS_X] * dimensions[ImgBuilder.AXIS_Y] +
+                            position[ImgBuilder.AXIS_Z] * dimensions[ImgBuilder.AXIS_X] * dimensions[ImgBuilder.AXIS_Y] * dimensions[ImgBuilder.AXIS_CHANNEL] +
+                            position[ImgBuilder.AXIS_TIME] * dimensions[ImgBuilder.AXIS_X] * dimensions[ImgBuilder.AXIS_Y] * dimensions[ImgBuilder.AXIS_CHANNEL] * dimensions[ImgBuilder.AXIS_Z]
             );
 
             value.set(pixels[index]);
@@ -108,11 +108,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.AXIS_X] * downsample),
-                            (int) (position[ImgCreator.AXIS_Y] * downsample),
-                            position[ImgCreator.AXIS_CHANNEL],
-                            position[ImgCreator.AXIS_Z],
-                            position[ImgCreator.AXIS_TIME]
+                            (int) (position[ImgBuilder.AXIS_X] * downsample),
+                            (int) (position[ImgBuilder.AXIS_Y] * downsample),
+                            position[ImgBuilder.AXIS_CHANNEL],
+                            position[ImgBuilder.AXIS_Z],
+                            position[ImgBuilder.AXIS_TIME]
                     ),
                     pixel.getRealDouble()
             );
@@ -129,11 +129,11 @@ public class Utils {
 
             Assertions.assertEquals(
                     pixelGetter.get(
-                            (int) (position[ImgCreator.AXIS_X] * downsample),
-                            (int) (position[ImgCreator.AXIS_Y] * downsample),
-                            position[ImgCreator.AXIS_CHANNEL],
-                            position[ImgCreator.AXIS_Z],
-                            position[ImgCreator.AXIS_TIME]
+                            (int) (position[ImgBuilder.AXIS_X] * downsample),
+                            (int) (position[ImgBuilder.AXIS_Y] * downsample),
+                            position[ImgBuilder.AXIS_CHANNEL],
+                            position[ImgBuilder.AXIS_Z],
+                            position[ImgBuilder.AXIS_TIME]
                     ),
                     pixel.get()
             );
