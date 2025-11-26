@@ -368,7 +368,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
             if (!(type instanceof ARGBType)) {
                 throw new IllegalArgumentException(String.format(
                         "The provided type %s is not an ARGBType, which is the one expected for RGB images",
-                        type
+                        type.getClass()
                 ));
             }
         } else {
@@ -377,7 +377,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof UnsignedByteType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a ByteType, which is the one expected for non-RGB UINT8 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
@@ -385,7 +385,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof ByteType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a UnsignedByteType, which is the one expected for non-RGB INT8 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
@@ -393,7 +393,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof UnsignedShortType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a UnsignedShortType, which is the one expected for non-RGB UINT16 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
@@ -401,7 +401,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof ShortType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a ShortType, which is the one expected for non-RGB INT16 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
@@ -409,7 +409,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof UnsignedIntType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a UnsignedIntType, which is the one expected for non-RGB UINT32 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
@@ -417,7 +417,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof IntType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a IntType, which is the one expected for non-RGB INT32 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
@@ -425,7 +425,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof FloatType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a FloatType, which is the one expected for non-RGB FLOAT32 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
@@ -433,7 +433,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                     if (!(type instanceof DoubleType)) {
                         throw new IllegalArgumentException(String.format(
                                 "The provided type %s is not a DoubleType, which is the one expected for non-RGB FLOAT64 images",
-                                type
+                                type.getClass()
                         ));
                     }
                 }
