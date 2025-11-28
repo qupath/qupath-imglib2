@@ -11,10 +11,9 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.SinglePixelPackedSampleModel;
 
 /**
- * An {@link ByteAccess} whose elements are computed from an (A)RGB {@link BufferedImage}.
+ * An {@link ByteAccess} whose elements are computed from an RGB {@link BufferedImage}.
  * <p>
- * If the alpha component is not provided (e.g. if the {@link BufferedImage} has the {@link BufferedImage#TYPE_INT_RGB} type),
- * then the alpha component of each pixel is considered to be 255.
+ * The alpha component is not taken into account.
  * <p>
  * This {@link ByteAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
@@ -28,7 +27,6 @@ public class ByteBufferedImageAccess implements ByteAccess, SizableDataAccess, V
     private final int width;
     private final int planeSize;
     private final boolean canUseDataBuffer;
-    private final boolean alphaProvided;
     private final int size;
 
     /**
@@ -46,7 +44,6 @@ public class ByteBufferedImageAccess implements ByteAccess, SizableDataAccess, V
 
         this.canUseDataBuffer = image.getRaster().getDataBuffer() instanceof DataBufferInt &&
                 image.getRaster().getSampleModel() instanceof SinglePixelPackedSampleModel;
-        this.alphaProvided = image.getType() == BufferedImage.TYPE_INT_ARGB;
 
         this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
     }
@@ -64,13 +61,6 @@ public class ByteBufferedImageAccess implements ByteAccess, SizableDataAccess, V
             case 0 -> (byte) ColorTools.red(pixel);
             case 1 -> (byte) ColorTools.green(pixel);
             case 2 -> (byte) ColorTools.blue(pixel);
-            case 3 -> {
-                if (alphaProvided) {
-                    yield (byte) ColorTools.alpha(pixel);
-                } else {
-                    yield (byte) 255;
-                }
-            }
             default -> throw new IllegalArgumentException(String.format("The provided index %d is out of bounds", index));
         };
     }

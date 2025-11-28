@@ -103,7 +103,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static ImgBuilder<?, ?> createBuilder(ImageServer<BufferedImage> server) {
+    public static ImgBuilder<? extends NumericType<?>, ?> createBuilder(ImageServer<BufferedImage> server) {
         if (server.isRGB()) {
             return new ImgBuilder<>(server, new ARGBType(), ArgbBufferedImageAccess::new, 1);
         } else {
@@ -267,9 +267,9 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static ImgBuilder<?, ?> createRealBuilder(ImageServer<BufferedImage> server) {
+    public static ImgBuilder<? extends RealType<?>, ?> createRealBuilder(ImageServer<BufferedImage> server) {
         if (server.isRGB()) {
-            return new ImgBuilder<>(server, new ARGBType(), ByteBufferedImageAccess::new, 4);
+            return new ImgBuilder<>(server, new UnsignedByteType(), ByteBufferedImageAccess::new, 3);
         } else {
             return switch (server.getPixelType()) {
                 case UINT8 -> new ImgBuilder<>(
@@ -383,7 +383,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         checkRealType(server, type);
 
         if (server.isRGB()) {
-            return new ImgBuilder<>(server, type, ByteBufferedImageAccess::new, 4);
+            return new ImgBuilder<>(server, type, ByteBufferedImageAccess::new, 3);
         } else {
             return switch (server.getPixelType()) {
                 case UINT8, INT8 -> new ImgBuilder<>(
