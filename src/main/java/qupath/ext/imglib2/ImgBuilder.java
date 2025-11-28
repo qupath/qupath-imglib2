@@ -107,56 +107,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         if (server.isRGB()) {
             return new ImgBuilder<>(server, new ARGBType(), ArgbBufferedImageAccess::new, 1);
         } else {
-            return switch (server.getPixelType()) {
-                case UINT8 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedByteType(),
-                        image -> new ByteRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case INT8 -> new ImgBuilder<>(
-                        server,
-                        new ByteType(),
-                        image -> new ByteRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case UINT16 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedShortType(),
-                        image -> new ShortRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case INT16 -> new ImgBuilder<>(
-                        server,
-                        new ShortType(),
-                        image -> new ShortRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case UINT32 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedIntType(),
-                        image -> new IntRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case INT32 -> new ImgBuilder<>(
-                        server,
-                        new IntType(),
-                        image -> new IntRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case FLOAT32 -> new ImgBuilder<>(
-                        server,
-                        new FloatType(),
-                        image -> new FloatRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case FLOAT64 -> new ImgBuilder<>(
-                        server,
-                        new DoubleType(),
-                        image -> new DoubleRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-            };
+            return createRealBuilderFromNonRgbServer(server);
         }
     }
 
@@ -271,56 +222,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         if (server.isRGB()) {
             return new ImgBuilder<>(server, new UnsignedByteType(), ByteBufferedImageAccess::new, 3);
         } else {
-            return switch (server.getPixelType()) {
-                case UINT8 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedByteType(),
-                        image -> new ByteRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case INT8 -> new ImgBuilder<>(
-                        server,
-                        new ByteType(),
-                        image -> new ByteRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case UINT16 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedShortType(),
-                        image -> new ShortRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case INT16 -> new ImgBuilder<>(
-                        server,
-                        new ShortType(),
-                        image -> new ShortRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case UINT32 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedIntType(),
-                        image -> new IntRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case INT32 -> new ImgBuilder<>(
-                        server,
-                        new IntType(),
-                        image -> new IntRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case FLOAT32 -> new ImgBuilder<>(
-                        server,
-                        new FloatType(),
-                        image -> new FloatRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-                case FLOAT64 -> new ImgBuilder<>(
-                        server,
-                        new DoubleType(),
-                        image -> new DoubleRasterAccess(image.getRaster()),
-                        server.nChannels()
-                );
-            };
+            return createRealBuilderFromNonRgbServer(server);
         }
     }
 
@@ -331,45 +233,9 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * <ul>
      *     <li>
      *         If the input image is {@link ImageServer#isRGB() RGB}, the type must be {@link UnsignedByteType}. Images
-     *         created by the returned builder will have 4 channels (RGBA).
+     *         created by the returned builder will have 3 channels (RGB).
      *     </li>
-     *     <li>
-     *         Else:
-     *         <ul>
-     *             <li>
-     *                 If the input image has the {@link PixelType#UINT8} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link UnsignedByteType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#INT8} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link ByteType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#UINT16} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link UnsignedShortType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#INT16} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link ShortType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#UINT32} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link UnsignedIntType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#INT32} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link IntType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#FLOAT32} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link FloatType}.
-     *             </li>
-     *             <li>
-     *                 If the input image has the {@link PixelType#FLOAT64} {@link ImageServer#getPixelType() pixel type},
-     *                 the type must be {@link DoubleType}.
-     *             </li>
-     *         </ul>
-     *     </li>
+     *     <li>Else, see {@link #createBuilder(ImageServer, NativeType)}.</li>
      * </ul>
      *
      * @param server the input image
@@ -566,6 +432,59 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         }
     }
 
+    private static ImgBuilder<? extends RealType<?>, ?> createRealBuilderFromNonRgbServer(ImageServer<BufferedImage> server) {
+        return switch (server.getPixelType()) {
+            case UINT8 -> new ImgBuilder<>(
+                    server,
+                    new UnsignedByteType(),
+                    image -> new ByteRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+            case INT8 -> new ImgBuilder<>(
+                    server,
+                    new ByteType(),
+                    image -> new ByteRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+            case UINT16 -> new ImgBuilder<>(
+                    server,
+                    new UnsignedShortType(),
+                    image -> new ShortRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+            case INT16 -> new ImgBuilder<>(
+                    server,
+                    new ShortType(),
+                    image -> new ShortRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+            case UINT32 -> new ImgBuilder<>(
+                    server,
+                    new UnsignedIntType(),
+                    image -> new IntRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+            case INT32 -> new ImgBuilder<>(
+                    server,
+                    new IntType(),
+                    image -> new IntRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+            case FLOAT32 -> new ImgBuilder<>(
+                    server,
+                    new FloatType(),
+                    image -> new FloatRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+            case FLOAT64 -> new ImgBuilder<>(
+                    server,
+                    new DoubleType(),
+                    image -> new DoubleRasterAccess(image.getRaster()),
+                    server.nChannels()
+            );
+        };
+    }
+
     private static <T> void checkType(ImageServer<?> server, T type) {
         if (server.isRGB()) {
             if (!(type instanceof ARGBType)) {
@@ -653,72 +572,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                 ));
             }
         } else {
-            switch (server.getPixelType()) {
-                case UINT8 -> {
-                    if (!(type instanceof UnsignedByteType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a UnsignedByteType, which is the one expected for non-RGB UINT8 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case INT8 -> {
-                    if (!(type instanceof ByteType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a ByteType, which is the one expected for non-RGB INT8 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case UINT16 -> {
-                    if (!(type instanceof UnsignedShortType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a UnsignedShortType, which is the one expected for non-RGB UINT16 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case INT16 -> {
-                    if (!(type instanceof ShortType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a ShortType, which is the one expected for non-RGB INT16 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case UINT32 -> {
-                    if (!(type instanceof UnsignedIntType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a UnsignedIntType, which is the one expected for non-RGB UINT32 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case INT32 -> {
-                    if (!(type instanceof IntType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a IntType, which is the one expected for non-RGB INT32 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case FLOAT32 -> {
-                    if (!(type instanceof FloatType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a FloatType, which is the one expected for non-RGB FLOAT32 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case FLOAT64 -> {
-                    if (!(type instanceof DoubleType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a DoubleType, which is the one expected for non-RGB FLOAT64 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-            }
+            checkType(server, type);
         }
     }
 
