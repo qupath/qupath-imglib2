@@ -41,14 +41,16 @@ import java.util.stream.IntStream;
 /**
  * A class to create {@link Img} or {@link RandomAccessibleInterval} from an {@link ImageServer}.
  * <p>
- * Use a {@link #createBuilder(ImageServer)} or {@link #createBuilder(ImageServer, NativeType)} to create an instance of this class.
+ * Use {@link #createBuilder(ImageServer)}, {@link #createBuilder(ImageServer, NumericType)},
+ * {@link #createRealBuilder(ImageServer)} or {@link #createRealBuilder(ImageServer, RealType)} to create an instance
+ * of this class.
  * <p>
  * This class is thread-safe.
  *
  * @param <T> the type of the returned accessibles
  * @param <A> the type contained in the input image
  */
-public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends SizableDataAccess> {
+public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends SizableDataAccess> {
 
     /**
      * The index of the X axis of accessibles returned by functions of this class
@@ -96,7 +98,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
      * <p>
      * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
-     * returned accessibles of this class. It is recommended to use {@link #createBuilder(ImageServer, NativeType)} instead.
+     * returned accessibles of this class. It is recommended to use {@link #createBuilder(ImageServer, NumericType)} instead.
      * See also this function to know which pixel type is used.
      *
      * @param server the input image
@@ -166,7 +168,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
      * the provided image has less than one channel
      */
-    public static <T extends NativeType<T> & NumericType<T>> ImgBuilder<T, ?> createBuilder(ImageServer<BufferedImage> server, T type) {
+    public static <T extends NumericType<T> & NativeType<T>> ImgBuilder<T, ?> createBuilder(ImageServer<BufferedImage> server, T type) {
         checkType(server, type);
 
         if (server.isRGB()) {
@@ -211,7 +213,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
      * <p>
      * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
-     * returned accessibles of this class. It is recommended to use {@link #createRealBuilder(ImageServer, NativeType)}
+     * returned accessibles of this class. It is recommended to use {@link #createRealBuilder(ImageServer, RealType)}
      * instead. See also this function to know which pixel type is used.
      *
      * @param server the input image
@@ -235,7 +237,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      *         If the input image is {@link ImageServer#isRGB() RGB}, the type must be {@link UnsignedByteType}. Images
      *         created by the returned builder will have 3 channels (RGB).
      *     </li>
-     *     <li>Else, see {@link #createBuilder(ImageServer, NativeType)}.</li>
+     *     <li>Else, see {@link #createBuilder(ImageServer, NumericType)}.</li>
      * </ul>
      *
      * @param server the input image
@@ -245,7 +247,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
      * the provided image has less than one channel
      */
-    public static <T extends NativeType<T> & RealType<T>> ImgBuilder<T, ?> createRealBuilder(ImageServer<BufferedImage> server, T type) {
+    public static <T extends RealType<T> & NativeType<T>> ImgBuilder<T, ?> createRealBuilder(ImageServer<BufferedImage> server, T type) {
         checkRealType(server, type);
 
         if (server.isRGB()) {
