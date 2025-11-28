@@ -1,6 +1,6 @@
 package qupath.ext.imglib2.accesses;
 
-import net.imglib2.img.basictypeaccess.IntAccess;
+import net.imglib2.img.basictypeaccess.ByteAccess;
 import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 import qupath.lib.common.ColorTools;
@@ -11,17 +11,17 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.SinglePixelPackedSampleModel;
 
 /**
- * An {@link IntAccess} whose elements are computed from an (A)RGB {@link BufferedImage}.
+ * An {@link ByteAccess} whose elements are computed from an (A)RGB {@link BufferedImage}.
  * <p>
  * If the alpha component is not provided (e.g. if the {@link BufferedImage} has the {@link BufferedImage#TYPE_INT_RGB} type),
  * then the alpha component of each pixel is considered to be 255.
  * <p>
- * This {@link IntAccess} is immutable; any attempt to changes its values will result in a
+ * This {@link ByteAccess} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  * <p>
  * This data access is marked as volatile but always contain valid data.
  */
-public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess, VolatileAccess {
+public class ByteBufferedImageAccess implements ByteAccess, SizableDataAccess, VolatileAccess {
 
     private final BufferedImage image;
     private final DataBuffer dataBuffer;
@@ -32,12 +32,12 @@ public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess, Vo
     private final int size;
 
     /**
-     * Create the buffered image access.
+     * Create the byte buffered image access.
      *
      * @param image the image containing the values to return. It is expected to be (A)RGB
      * @throws NullPointerException if the provided image is null
      */
-    public ArgbBufferedImageAccess(BufferedImage image) {
+    public ByteBufferedImageAccess(BufferedImage image) {
         this.image = image;
         this.dataBuffer = this.image.getRaster().getDataBuffer();
 
@@ -52,29 +52,31 @@ public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess, Vo
     }
 
     @Override
-    public int getValue(int index) {
+    public byte getValue(int index) {
+        int channel = index / planeSize;
         int xyIndex = index % planeSize;
 
-        if (canUseDataBuffer) {
-            int pixel = dataBuffer.getElem(0, xyIndex);
+        int pixel = canUseDataBuffer ?
+                dataBuffer.getElem(0, xyIndex) :
+                image.getRGB(xyIndex % width, xyIndex / width);
 
-            if (alphaProvided) {
-                return pixel;
-            } else {
-                return ColorTools.packARGB(
-                        255,
-                        ColorTools.red(pixel),
-                        ColorTools.green(pixel),
-                        ColorTools.blue(pixel)
-                );
+        return switch (channel) {
+            case 0 -> (byte) ColorTools.red(pixel);
+            case 1 -> (byte) ColorTools.green(pixel);
+            case 2 -> (byte) ColorTools.blue(pixel);
+            case 3 -> {
+                if (alphaProvided) {
+                    yield (byte) ColorTools.alpha(pixel);
+                } else {
+                    yield (byte) 255;
+                }
             }
-        } else {
-            return image.getRGB(xyIndex % width, xyIndex / width);
-        }
+            default -> throw new IllegalArgumentException(String.format("The provided index %d is out of bounds", index));
+        };
     }
 
     @Override
-    public void setValue(int index, int value) {
+    public void setValue(int index, byte value) {
         throw new UnsupportedOperationException("This access is not mutable");
     }
 
