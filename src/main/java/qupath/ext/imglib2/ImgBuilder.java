@@ -17,6 +17,8 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
+import net.imglib2.view.composite.RealComposite;
 import qupath.ext.imglib2.accesses.ArgbBufferedImageAccess;
 import qupath.ext.imglib2.accesses.ByteBufferedImageAccess;
 import qupath.ext.imglib2.accesses.ByteRasterAccess;
@@ -26,6 +28,7 @@ import qupath.ext.imglib2.accesses.IntRasterAccess;
 import qupath.ext.imglib2.accesses.ShortRasterAccess;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerMetadata;
+import qupath.lib.images.servers.ImageServers;
 import qupath.lib.images.servers.PixelType;
 import qupath.lib.images.servers.ServerTools;
 import qupath.lib.images.servers.TileRequest;
@@ -48,9 +51,8 @@ import java.util.stream.IntStream;
  * This class is thread-safe.
  *
  * @param <T> the type of the returned accessibles
- * @param <A> the type contained in the input image
  */
-public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends SizableDataAccess> {
+public class ImgBuilder<T> {
 
     /**
      * The index of the X axis of accessibles returned by functions of this class
@@ -78,12 +80,12 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
     public static final int NUMBER_OF_AXES = 5;
     private static final CellCache DEFAULT_CELL_CACHE = new CellCache((int) (Runtime.getRuntime().maxMemory() * 0.5 / (1024 * 1024)));
     private final ImageServer<BufferedImage> server;
-    private final Function<BufferedImage, A> cellCreator;
+    private final Function<BufferedImage, ? extends SizableDataAccess> cellCreator;
     private final int numberOfChannels;
     private final T type;
     private CellCache cellCache = DEFAULT_CELL_CACHE;
 
-    private ImgBuilder(ImageServer<BufferedImage> server, T type, Function<BufferedImage, A> cellCreator, int numberOfChannels) {
+    private ImgBuilder(ImageServer<BufferedImage> server, T type, Function<BufferedImage, ? extends SizableDataAccess> cellCreator, int numberOfChannels) {
         if (server.nChannels() <= 0) {
             throw new IllegalArgumentException(String.format("The provided image has less than one channel (%d)", server.nChannels()));
         }
@@ -105,7 +107,7 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static ImgBuilder<? extends NumericType<?>, ?> createBuilder(ImageServer<BufferedImage> server) {
+    public static ImgBuilder<? extends NumericType<?>> createBuilder(ImageServer<BufferedImage> server) {
         if (server.isRGB()) {
             return new ImgBuilder<>(server, new ARGBType(), ArgbBufferedImageAccess::new, 1);
         } else {
@@ -168,7 +170,7 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
      * the provided image has less than one channel
      */
-    public static <T extends NumericType<T> & NativeType<T>> ImgBuilder<T, ?> createBuilder(ImageServer<BufferedImage> server, T type) {
+    public static <T extends NumericType<T>> ImgBuilder<T> createBuilder(ImageServer<BufferedImage> server, T type) {
         checkType(server, type);
 
         if (server.isRGB()) {
@@ -220,7 +222,7 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static ImgBuilder<? extends RealType<?>, ?> createRealBuilder(ImageServer<BufferedImage> server) {
+    public static ImgBuilder<? extends RealType<?>> createRealBuilder(ImageServer<BufferedImage> server) {
         if (server.isRGB()) {
             return new ImgBuilder<>(server, new UnsignedByteType(), ByteBufferedImageAccess::new, 3);
         } else {
@@ -247,7 +249,7 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
      * the provided image has less than one channel
      */
-    public static <T extends RealType<T> & NativeType<T>> ImgBuilder<T, ?> createRealBuilder(ImageServer<BufferedImage> server, T type) {
+    public static <T extends RealType<T> & NativeType<T>> ImgBuilder<T> createRealBuilder(ImageServer<BufferedImage> server, T type) {
         checkRealType(server, type);
 
         if (server.isRGB()) {
@@ -297,7 +299,7 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
      * @return this builder
      * @throws NullPointerException if the provided cache is null
      */
-    public ImgBuilder<T, A> cellCache(CellCache cellCache) {
+    public ImgBuilder<T> cellCache(CellCache cellCache) {
         this.cellCache = Objects.requireNonNull(cellCache);
         return this;
     }
@@ -345,8 +347,15 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
             ));
         }
 
-        List<TileRequest> tiles = new ArrayList<>(server.getTileRequestManager().getTileRequestsForLevel(level));
+        if (type instanceof NativeType<?>) {
+            return createLazyImage((NativeType)type, level);
+        } else {
+            throw new IllegalArgumentException(type + " is not an instanceof NativeType");
+        }
+    }
 
+    private <S extends NativeType<S>> LazyCellImg<S, ?> createLazyImage(S type, int level) {
+        List<TileRequest> tiles = new ArrayList<>(server.getTileRequestManager().getTileRequestsForLevel(level));
         return new LazyCellImg<>(
                 new CellGrid(
                         new long[] {
@@ -420,21 +429,23 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
         }
 
         int level = ServerTools.getPreferredResolutionLevel(server, downsample);
+        RandomAccessibleInterval<T> imgLevel = buildForLevel(level);
 
-        if (server.getMetadata().getChannelType() == ImageServerMetadata.ChannelType.CLASSIFICATION) {
-            return AccessibleScaler.scaleWithNearestNeighborInterpolation(
-                    buildForLevel(level),
+        if (server.getMetadata().getChannelType() != ImageServerMetadata.ChannelType.CLASSIFICATION &&
+            imgLevel.getType() instanceof NumericType<?>) {
+            return AccessibleScaler.scaleWithLinearInterpolation(
+                    (RandomAccessibleInterval)imgLevel,
                     server.getDownsampleForResolution(level) / downsample
             );
         } else {
-            return AccessibleScaler.scaleWithLinearInterpolation(
-                    buildForLevel(level),
+            return AccessibleScaler.scaleWithNearestNeighborInterpolation(
+                    imgLevel,
                     server.getDownsampleForResolution(level) / downsample
             );
         }
     }
 
-    private static ImgBuilder<? extends RealType<?>, ?> createRealBuilderFromNonRgbServer(ImageServer<BufferedImage> server) {
+    private static ImgBuilder<RealType<?>> createRealBuilderFromNonRgbServer(ImageServer<BufferedImage> server) {
         return switch (server.getPixelType()) {
             case UINT8 -> new ImgBuilder<>(
                     server,
@@ -578,7 +589,7 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
         }
     }
 
-    private Cell<A> createCell(TileRequest tile) {
+    private Cell<? extends SizableDataAccess> createCell(TileRequest tile) {
         BufferedImage image;
         try {
             image = server.readRegion(tile.getRegionRequest());
@@ -592,4 +603,37 @@ public class ImgBuilder<T extends NumericType<T> & NativeType<T>, A extends Siza
                 cellCreator.apply(image)
         );
     }
+
+
+    @SuppressWarnings("unchecked") // Class only used internally
+    private static <T extends RealType<T> & NativeType<T>> T getRealType(PixelType type) {
+        Objects.requireNonNull(type, "Pixel type must not be null");
+        return switch (type) {
+            case UINT8 -> (T)new UnsignedByteType();
+            case INT8 -> (T)new ByteType();
+            case UINT16 -> (T)new UnsignedShortType();
+            case INT16 -> (T)new ShortType();
+            case UINT32 -> (T)new UnsignedIntType();
+            case INT32 -> (T)new IntType();
+            case FLOAT32 -> (T)new FloatType();
+            case FLOAT64 -> (T)new DoubleType();
+        };
+    }
+
+
+    public static <T extends RealType<T>> void anything(String[] args) {
+        try (var server = ImageServers.buildServer("")) {
+            T t = getRealType(server.getPixelType());
+//            RandomAccessibleInterval<? extends RealType<?>> img = ImgBuilder.createRealBuilder(server).buildForLevel(0);
+            RandomAccessibleInterval<T> img = ImgBuilder.createBuilder(server, t).buildForLevel(0);
+            Views.collapseReal(img);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static <T extends RealType<T>> RandomAccessibleInterval<RealComposite<T>> collapse(RandomAccessibleInterval<T> img) {
+        return Views.collapseReal(img);
+    }
+
 }
