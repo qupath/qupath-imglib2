@@ -488,7 +488,7 @@ public class ImgBuilder<T> {
      * @param <T> generic parameter for the type
      */
     @SuppressWarnings("unchecked")
-    private static <T extends RealType<T>> T getRealType(PixelType pixelType) {
+    public static <T extends RealType<T>> T getRealType(PixelType pixelType) {
         Objects.requireNonNull(pixelType, "Pixel type must not be null");
         return switch (pixelType) {
             case UINT8 -> (T)new UnsignedByteType();
@@ -501,5 +501,6 @@ public class ImgBuilder<T> {
             case FLOAT64 -> (T)new DoubleType();
         };
     }
+    
 
 }
