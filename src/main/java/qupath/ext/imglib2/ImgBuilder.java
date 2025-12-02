@@ -48,7 +48,7 @@ import java.util.stream.IntStream;
  *
  * @param <T> the type of the returned accessibles
  */
-public class ImgBuilder<T> {
+public class ImgBuilder<T extends NumericType<T>> {
 
     /**
      * The index of the X axis of accessibles returned by functions of this class
@@ -286,6 +286,7 @@ public class ImgBuilder<T> {
         if (type instanceof NativeType<?>) {
             return createLazyImage((NativeType)type, level);
         } else {
+            // This code should not be reached, since we checked the type in the constructor
             throw new IllegalArgumentException(type + " is not an instanceof NativeType");
         }
     }
@@ -367,10 +368,9 @@ public class ImgBuilder<T> {
         int level = ServerTools.getPreferredResolutionLevel(server, downsample);
         RandomAccessibleInterval<T> imgLevel = buildForLevel(level);
 
-        if (server.getMetadata().getChannelType() != ImageServerMetadata.ChannelType.CLASSIFICATION &&
-            imgLevel.getType() instanceof NumericType<?>) {
+        if (server.getMetadata().getChannelType() != ImageServerMetadata.ChannelType.CLASSIFICATION) {
             return AccessibleScaler.scaleWithLinearInterpolation(
-                    (RandomAccessibleInterval)imgLevel,
+                    imgLevel,
                     server.getDownsampleForResolution(level) / downsample
             );
         } else {

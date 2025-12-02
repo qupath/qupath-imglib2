@@ -45,7 +45,7 @@ public class TestImgBuilder {
 
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> ImgBuilder.createBuilder(imageServer, new FloatType()).buildForLevel(0));
-        
+
         imageServer.close();
     }
 
