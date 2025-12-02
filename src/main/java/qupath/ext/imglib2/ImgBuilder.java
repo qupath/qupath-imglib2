@@ -384,7 +384,7 @@ public class ImgBuilder<T extends NumericType<T>> {
             }
         } else {
             var pixelType = server.getPixelType();
-            var expectedType = getRealType(pixelType);
+            var expectedType = getRealTypeUnsafe(pixelType);
             if (!expectedType.getClass().isInstance(type)) {
                 throw new IllegalArgumentException(String.format(
                         "The provided type %s is not %s, which is the one expected for %s images",
@@ -447,7 +447,7 @@ public class ImgBuilder<T extends NumericType<T>> {
         if (server.isRGB())
             return (T)getRgbType();
         else
-            return (T)getRealType(server.getPixelType());
+            return (T)getRealTypeUnsafe(server.getPixelType());
     }
 
     /**
@@ -467,7 +467,7 @@ public class ImgBuilder<T extends NumericType<T>> {
      * @return the default real type to create images for this server
      */
     public static RealType<?> getRealType(ImageServer<?> server) {
-        return getRealType(server.getPixelType());
+        return getRealTypeUnsafe(server.getPixelType());
     }
 
     /**
