@@ -42,8 +42,10 @@ public class TestImgBuilder {
         boolean isRgb = false;
         PixelType pixelType = PixelType.UINT8;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
+
         Assertions.assertThrows(IllegalArgumentException.class,
                 () -> ImgBuilder.createBuilder(imageServer, new FloatType()).buildForLevel(0));
+        
         imageServer.close();
     }
 
@@ -52,11 +54,13 @@ public class TestImgBuilder {
         boolean isRgb = false;
         PixelType pixelType = PixelType.UINT8;
         ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
+
         Assertions.assertThrows(ClassCastException.class,
                 () -> {
                     FloatType myType = ImgBuilder.getRealType(imageServer.getPixelType());
                     ImgBuilder.createBuilder(imageServer, myType).buildForLevel(0);
                 });
+
         imageServer.close();
     }
 

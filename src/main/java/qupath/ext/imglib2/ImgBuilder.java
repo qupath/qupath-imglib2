@@ -83,16 +83,17 @@ public class ImgBuilder<T> {
     private ImgBuilder(ImageServer<BufferedImage> server, T type, int numberOfChannels) {
         Objects.requireNonNull(server, "Server must not be null");
         Objects.requireNonNull(type, "Type must not be null");
-        if (server.nChannels() <= 0) {
+        if (numberOfChannels <= 0) {
             throw new IllegalArgumentException(String.format("The provided image has less than one channel (%d)", server.nChannels()));
         }
-        this.server = server;
-        this.numberOfChannels = numberOfChannels;
-        this.type = type;
         if (server.isRGB() && numberOfChannels == 1)
             checkType(server, type);
         else
             checkRealType(server.getPixelType(), type);
+
+        this.server = server;
+        this.numberOfChannels = numberOfChannels;
+        this.type = type;
     }
 
     /**
@@ -171,15 +172,11 @@ public class ImgBuilder<T> {
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
      * the provided image has less than one channel
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public static <T extends NumericType<T>> ImgBuilder<T> createBuilder(ImageServer<BufferedImage> server, T type) {
-        checkType(server, type);
         if (server.isRGB() && type instanceof ARGBType) {
             return new ImgBuilder<>(server, type, 1);
-        } else if (type instanceof RealType<?>) {
-            return createRealBuilder(server, (RealType)type);
         } else {
-            throw new IllegalArgumentException(type + " is not an instanceof RealType");
+            return new ImgBuilder<>(server, type, server.nChannels());
         }
     }
 
@@ -216,17 +213,18 @@ public class ImgBuilder<T> {
      * <p>
      * Note that the type must be compatible for this to work; see {@link #createBuilder(ImageServer, NumericType)}
      * for more information, and/or check the type against the type returned by {@link #getRealType(PixelType)}.
+     * <p>
+     * Note that for an RGB image, this will give 3 channels with {@link UnsignedByteType}, rather than using {@link ARGBType}.
      *
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
      *      * the provided image has less than one channel
+     * @see #createRgbBuilder(ImageServer)
      */
     public static <T extends RealType<T>> ImgBuilder<T> createRealBuilder(ImageServer<BufferedImage> server, T type) {
         return new ImgBuilder<>(server, type, server.nChannels());
     }
-
-
 
     /**
      * Accessibles returned by this class will be divided into cells, which will be cached to gain performance. This
