@@ -86,10 +86,7 @@ public class ImgBuilder<T extends NumericType<T>> {
         if (numberOfChannels <= 0) {
             throw new IllegalArgumentException(String.format("The provided image has less than one channel (%d)", server.nChannels()));
         }
-        if (server.isRGB() && numberOfChannels == 1)
-            checkType(server, type);
-        else
-            checkRealType(server.getPixelType(), type);
+        checkType(server, type, numberOfChannels);
 
         this.server = server;
         this.numberOfChannels = numberOfChannels;
@@ -101,19 +98,16 @@ public class ImgBuilder<T extends NumericType<T>> {
      * <p>
      * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
      * returned accessibles of this class. It is recommended to use {@link #createBuilder(ImageServer, NumericType)} instead.
-     * See also this function to know which pixel type is used.
+     * <p>
+     * To query the pixel type that will be used, see {@link #getDefaultType(ImageServer)}.
      *
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static <T extends RealType<T>> ImgBuilder<? extends NumericType<?>> createBuilder(ImageServer<BufferedImage> server) {
-        if (server.isRGB()) {
-            return createRgbBuilder(server);
-        } else {
-            T type = getRealType(server.getPixelType());
-            return createBuilder(server, type);
-        }
+    public static <T extends NumericType<T>> ImgBuilder<? extends NumericType<?>> createBuilder(ImageServer<BufferedImage> server) {
+        T type = getDefaultTypeUnsafe(server);
+        return createBuilder(server, type);
     }
 
 
@@ -188,7 +182,7 @@ public class ImgBuilder<T extends NumericType<T>> {
      * @throws IllegalArgumentException if the provided image is not RGB
      */
     public static ImgBuilder<ARGBType> createRgbBuilder(ImageServer<BufferedImage> server) throws IllegalArgumentException {
-        return new ImgBuilder<>(server, new ARGBType(), 1);
+        return createBuilder(server, new ARGBType());
     }
 
     /**
@@ -204,7 +198,7 @@ public class ImgBuilder<T extends NumericType<T>> {
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
     public static <T extends RealType<T>> ImgBuilder<? extends RealType<?>> createRealBuilder(ImageServer<BufferedImage> server) {
-        T type = getRealType(server.getPixelType());
+        T type = getRealTypeUnsafe(server.getPixelType());
         return createRealBuilder(server, type);
     }
 
@@ -223,7 +217,7 @@ public class ImgBuilder<T extends NumericType<T>> {
      * @see #createRgbBuilder(ImageServer)
      */
     public static <T extends RealType<T>> ImgBuilder<T> createRealBuilder(ImageServer<BufferedImage> server, T type) {
-        return new ImgBuilder<>(server, type, server.nChannels());
+        return createBuilder(server, type);
     }
 
     /**
@@ -283,8 +277,10 @@ public class ImgBuilder<T extends NumericType<T>> {
             ));
         }
 
-        if (type instanceof NativeType<?>) {
-            return createLazyImage((NativeType)type, level);
+        if (type instanceof NativeType) {
+            @SuppressWarnings({"unchecked", "rawtypes"}) // Type checked in constructor
+            RandomAccessibleInterval<T> img = createLazyImage((NativeType)type, level);
+            return img;
         } else {
             // This code should not be reached, since we checked the type in the constructor
             throw new IllegalArgumentException(type + " is not an instanceof NativeType");
@@ -335,9 +331,10 @@ public class ImgBuilder<T extends NumericType<T>> {
      * applied. The ith returned {@link RandomAccessibleInterval} corresponds to the ith provided downsample
      * @throws IllegalArgumentException if one of the provided downsamples is not greater than 0
      */
-    public List<RandomAccessibleInterval<T>> buildForDownsamples(List<Double> downsamples) {
+    public List<RandomAccessibleInterval<T>> buildForDownsamples(List<? extends Number> downsamples) {
         return downsamples.stream()
-                .map(this::buildForDownsample)
+                .mapToDouble(Number::doubleValue)
+                .mapToObj(this::buildForDownsample)
                 .toList();
     }
 
@@ -368,21 +365,16 @@ public class ImgBuilder<T extends NumericType<T>> {
         int level = ServerTools.getPreferredResolutionLevel(server, downsample);
         RandomAccessibleInterval<T> imgLevel = buildForLevel(level);
 
+        double scale = server.getDownsampleForResolution(level) / downsample;
         if (server.getMetadata().getChannelType() != ImageServerMetadata.ChannelType.CLASSIFICATION) {
-            return AccessibleScaler.scaleWithLinearInterpolation(
-                    imgLevel,
-                    server.getDownsampleForResolution(level) / downsample
-            );
+            return AccessibleScaler.scaleWithLinearInterpolation(imgLevel, scale);
         } else {
-            return AccessibleScaler.scaleWithNearestNeighborInterpolation(
-                    imgLevel,
-                    server.getDownsampleForResolution(level) / downsample
-            );
+            return AccessibleScaler.scaleWithNearestNeighborInterpolation(imgLevel, scale);
         }
     }
 
-    private static <T> void checkType(ImageServer<?> server, T type) {
-        if (server.isRGB()) {
+    private static <T> void checkType(ImageServer<?> server, T type, int nChannels) {
+        if (server.isRGB() && nChannels == 1) {
             if (!(type instanceof ARGBType)) {
                 throw new IllegalArgumentException(String.format(
                         "The provided type %s is not an ARGBType, which is the one expected for RGB images",
@@ -390,21 +382,19 @@ public class ImgBuilder<T extends NumericType<T>> {
                 ));
             }
         } else {
-            checkRealType(server.getPixelType(), type);
+            var pixelType = server.getPixelType();
+            var expectedType = getRealType(pixelType);
+            if (!expectedType.getClass().isInstance(type)) {
+                throw new IllegalArgumentException(String.format(
+                        "The provided type %s is not %s, which is the one expected for %s images",
+                        type.getClass(),
+                        expectedType.getClass().getSimpleName(),
+                        pixelType
+                ));
+            }
         }
     }
 
-    private static <T> void checkRealType(PixelType pixelType, T type) {
-        var expectedType = getRealType(pixelType);
-        if (!expectedType.getClass().isInstance(type)) {
-            throw new IllegalArgumentException(String.format(
-                    "The provided type %s is not %s, which is the one expected for %s images",
-                    type.getClass(),
-                    expectedType.getClass().getSimpleName(),
-                    pixelType
-            ));
-        }
-    }
 
     private Cell<? extends SizableDataAccess> createCell(TileRequest tile) {
         BufferedImage image;
@@ -441,21 +431,27 @@ public class ImgBuilder<T extends NumericType<T>> {
     }
 
     /**
-     * Create an instance of the default type for a server.
-     * If {@code server.isRGB()} returns true, this will call {@link #getRgbType()}, otherwise it will call
-     * {@link #getRealType(ImageServer)}.
+     * Create an instance of the default type for a server when using {@link #createBuilder(ImageServer)}.
+     * If {@code server.isRGB()} returns true, this will return the value of {@link #getRgbType()},
+     * otherwise it will return the value of {@link #getRealType(ImageServer)}.
      * @param server the image server
      * @return the default numeric type to create images for this server
      */
     public static NumericType<?> getDefaultType(ImageServer<?> server) {
+        return getDefaultTypeUnsafe(server);
+    }
+
+    @SuppressWarnings("unchecked") // Private method, used internally
+    private static <T extends NumericType<T>> T getDefaultTypeUnsafe(ImageServer<?> server) {
         if (server.isRGB())
-            return getRgbType();
+            return (T)getRgbType();
         else
-            return getRealType(server.getPixelType());
+            return (T)getRealType(server.getPixelType());
     }
 
     /**
-     * Create an instance of the default type for an RGB image.
+     * Create an instance of the default type for an RGB image, using a packed int representation so
+     * that all RGB values can be contained in a single 'channel'.
      * @return a new instance of {@link ARGBType}.
      */
     public static ARGBType getRgbType() {
@@ -465,7 +461,7 @@ public class ImgBuilder<T extends NumericType<T>> {
     /**
      * Create an instance of the default {@link RealType} for an image server.
      * If the image is RGB, this will return {@link UnsignedByteType} - indicating that channels should be
-     * treated separately.
+     * treated separately, and not used a packed representation as with {@link #getRgbType()}.
      * @param server the image server
      * @return the default real type to create images for this server
      */
@@ -485,8 +481,12 @@ public class ImgBuilder<T extends NumericType<T>> {
      * @return an instanceof {@link RealType} suitable to represent the given pixel type
      * @param <T> generic parameter for the type
      */
-    @SuppressWarnings("unchecked")
     public static <T extends RealType<T>> T getRealType(PixelType pixelType) {
+        return getRealTypeUnsafe(pixelType);
+    }
+
+    @SuppressWarnings("unchecked") // Private method
+    private static <T extends RealType<T>> T getRealTypeUnsafe(PixelType pixelType) {
         Objects.requireNonNull(pixelType, "Pixel type must not be null");
         return switch (pixelType) {
             case UINT8 -> (T)new UnsignedByteType();
@@ -499,6 +499,5 @@ public class ImgBuilder<T extends NumericType<T>> {
             case FLOAT64 -> (T)new DoubleType();
         };
     }
-    
 
 }
