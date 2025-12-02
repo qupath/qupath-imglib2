@@ -117,8 +117,9 @@ public class ImgBuilder<T extends NumericType<T>> {
      * The provided type must be compatible with the input image:
      * <ul>
      *     <li>
-     *         If the input image is {@link ImageServer#isRGB() RGB}, the type must be {@link ARGBType}. Images created
-     *         by the returned builder will have one channel.
+     *         If the input image is {@link ImageServer#isRGB() RGB}, the type may be {@link ARGBType}, in which case
+     *         images created by the returned builder will have one channel.
+     *         Alternatively, the type may be {@link UnsignedByteType} and the image will have three channels.
      *     </li>
      *     <li>
      *         Else:
@@ -213,7 +214,7 @@ public class ImgBuilder<T extends NumericType<T>> {
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
-     *      * the provided image has less than one channel
+     *         the provided image has less than one channel
      * @see #createRgbBuilder(ImageServer)
      */
     public static <T extends RealType<T>> ImgBuilder<T> createRealBuilder(ImageServer<BufferedImage> server, T type) {
@@ -441,7 +442,7 @@ public class ImgBuilder<T extends NumericType<T>> {
         return getDefaultTypeUnsafe(server);
     }
 
-    @SuppressWarnings("unchecked") // Private method, used internally
+    @SuppressWarnings("unchecked") // Private method - must only be used internally with appropriate return value
     private static <T extends NumericType<T>> T getDefaultTypeUnsafe(ImageServer<?> server) {
         if (server.isRGB())
             return (T)getRgbType();
@@ -485,7 +486,7 @@ public class ImgBuilder<T extends NumericType<T>> {
         return getRealTypeUnsafe(pixelType);
     }
 
-    @SuppressWarnings("unchecked") // Private method
+    @SuppressWarnings("unchecked") // Private method - must only be used internally with appropriate return value
     private static <T extends RealType<T>> T getRealTypeUnsafe(PixelType pixelType) {
         Objects.requireNonNull(pixelType, "Pixel type must not be null");
         return switch (pixelType) {
