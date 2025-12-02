@@ -8,6 +8,7 @@ import net.imglib2.img.cell.LazyCellImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.ByteType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.ShortType;
@@ -17,6 +18,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import qupath.ext.imglib2.accesses.ArgbBufferedImageAccess;
+import qupath.ext.imglib2.accesses.ByteBufferedImageAccess;
 import qupath.ext.imglib2.accesses.ByteRasterAccess;
 import qupath.ext.imglib2.accesses.DoubleRasterAccess;
 import qupath.ext.imglib2.accesses.FloatRasterAccess;
@@ -33,20 +35,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
 /**
  * A class to create {@link Img} or {@link RandomAccessibleInterval} from an {@link ImageServer}.
  * <p>
- * Use a {@link #createBuilder(ImageServer)} or {@link #createBuilder(ImageServer, NativeType)} to create an instance of this class.
+ * Use {@link #createBuilder(ImageServer)}, {@link #createBuilder(ImageServer, NumericType)},
+ * {@link #createRealBuilder(ImageServer)} or {@link #createRealBuilder(ImageServer, RealType)} to create an instance
+ * of this class.
  * <p>
  * This class is thread-safe.
  *
  * @param <T> the type of the returned accessibles
- * @param <A> the type contained in the input image
  */
-public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends SizableDataAccess> {
+public class ImgBuilder<T extends NumericType<T>> {
 
     /**
      * The index of the X axis of accessibles returned by functions of this class
@@ -74,19 +76,20 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
     public static final int NUMBER_OF_AXES = 5;
     private static final CellCache DEFAULT_CELL_CACHE = new CellCache((int) (Runtime.getRuntime().maxMemory() * 0.5 / (1024 * 1024)));
     private final ImageServer<BufferedImage> server;
-    private final Function<BufferedImage, A> cellCreator;
     private final int numberOfChannels;
     private final T type;
     private CellCache cellCache = DEFAULT_CELL_CACHE;
 
-    private ImgBuilder(ImageServer<BufferedImage> server, T type, Function<BufferedImage, A> cellCreator) {
-        if (server.nChannels() <= 0) {
+    private ImgBuilder(ImageServer<BufferedImage> server, T type, int numberOfChannels) {
+        Objects.requireNonNull(server, "Server must not be null");
+        Objects.requireNonNull(type, "Type must not be null");
+        if (numberOfChannels <= 0) {
             throw new IllegalArgumentException(String.format("The provided image has less than one channel (%d)", server.nChannels()));
         }
+        checkType(server, type, numberOfChannels);
 
         this.server = server;
-        this.numberOfChannels = server.isRGB() ? 1 : server.nChannels();
-        this.cellCreator = cellCreator;
+        this.numberOfChannels = numberOfChannels;
         this.type = type;
     }
 
@@ -94,67 +97,30 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
      * <p>
      * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
-     * returned accessibles of this class. It is recommended to use {@link #createBuilder(ImageServer, NativeType)} instead.
+     * returned accessibles of this class. It is recommended to use {@link #createBuilder(ImageServer, NumericType)} instead.
+     * <p>
+     * To query the pixel type that will be used, see {@link #getDefaultType(ImageServer)}.
      *
      * @param server the input image
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided image has less than one channel
      */
-    public static ImgBuilder<?, ?> createBuilder(ImageServer<BufferedImage> server) {
-        if (server.isRGB()) {
-            return new ImgBuilder<>(server, new ARGBType(), ArgbBufferedImageAccess::new);
-        } else {
-            return switch (server.getPixelType()) {
-                case UINT8 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedByteType(),
-                        image -> new ByteRasterAccess(image.getRaster())
-                );
-                case INT8 -> new ImgBuilder<>(
-                        server,
-                        new ByteType(),
-                        image -> new ByteRasterAccess(image.getRaster())
-                );
-                case UINT16 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedShortType(),
-                        image -> new ShortRasterAccess(image.getRaster())
-                );
-                case INT16 -> new ImgBuilder<>(
-                        server,
-                        new ShortType(),
-                        image -> new ShortRasterAccess(image.getRaster())
-                );
-                case UINT32 -> new ImgBuilder<>(
-                        server,
-                        new UnsignedIntType(),
-                        image -> new IntRasterAccess(image.getRaster())
-                );
-                case INT32 -> new ImgBuilder<>(
-                        server,
-                        new IntType(),
-                        image -> new IntRasterAccess(image.getRaster())
-                );
-                case FLOAT32 -> new ImgBuilder<>(
-                        server,
-                        new FloatType(),
-                        image -> new FloatRasterAccess(image.getRaster())
-                );
-                case FLOAT64 -> new ImgBuilder<>(
-                        server,
-                        new DoubleType(),
-                        image -> new DoubleRasterAccess(image.getRaster())
-                );
-            };
-        }
+    public static <T extends NumericType<T>> ImgBuilder<? extends NumericType<?>> createBuilder(ImageServer<BufferedImage> server) {
+        T type = getDefaultTypeUnsafe(server);
+        return createBuilder(server, type);
     }
+
 
     /**
      * Create a builder from an {@link ImageServer}. This doesn't create any accessibles yet.
      * <p>
      * The provided type must be compatible with the input image:
      * <ul>
-     *     <li>If the input image is {@link ImageServer#isRGB() RGB}, the type must be {@link ARGBType}.</li>
+     *     <li>
+     *         If the input image is {@link ImageServer#isRGB() RGB}, the type may be {@link ARGBType}, in which case
+     *         images created by the returned builder will have one channel.
+     *         Alternatively, the type may be {@link UnsignedByteType} and the image will have three channels.
+     *     </li>
      *     <li>
      *         Else:
      *         <ul>
@@ -201,20 +167,58 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
      * the provided image has less than one channel
      */
-    public static <T extends NativeType<T> & NumericType<T>> ImgBuilder<T, ?> createBuilder(ImageServer<BufferedImage> server, T type) {
-        checkType(server, type);
-
-        if (server.isRGB()) {
-            return new ImgBuilder<>(server, type, ArgbBufferedImageAccess::new);
+    public static <T extends NumericType<T>> ImgBuilder<T> createBuilder(ImageServer<BufferedImage> server, T type) {
+        if (server.isRGB() && type instanceof ARGBType) {
+            return new ImgBuilder<>(server, type, 1);
         } else {
-            return switch (server.getPixelType()) {
-                case UINT8, INT8 -> new ImgBuilder<>(server, type, image -> new ByteRasterAccess(image.getRaster()));
-                case UINT16, INT16 -> new ImgBuilder<>(server, type, image -> new ShortRasterAccess(image.getRaster()));
-                case UINT32, INT32 -> new ImgBuilder<>(server, type, image -> new IntRasterAccess(image.getRaster()));
-                case FLOAT32 -> new ImgBuilder<>(server, type, image -> new FloatRasterAccess(image.getRaster()));
-                case FLOAT64 -> new ImgBuilder<>(server, type, image -> new DoubleRasterAccess(image.getRaster()));
-            };
+            return new ImgBuilder<>(server, type, server.nChannels());
         }
+    }
+
+    /**
+     * Create a builder from an {@link ImageServer} representing an RGB image using {@link ARGBType}.
+     *
+     * @param server the input image
+     * @return a builder to create an instance of this class
+     * @throws IllegalArgumentException if the provided image is not RGB
+     */
+    public static ImgBuilder<ARGBType> createRgbBuilder(ImageServer<BufferedImage> server) throws IllegalArgumentException {
+        return createBuilder(server, new ARGBType());
+    }
+
+    /**
+     * Create a builder from an {@link ImageServer}, where the type is known to be an instance of {@link RealType}.
+     * An RGB image is returned so that the channels are accessed separately, not packed into a single type.
+     * <p>
+     * The type of the output image is not checked, which might lead to problems later when accessing pixel values of the
+     * returned accessibles of this class. It is recommended to use {@link #createRealBuilder(ImageServer, RealType)} instead.
+     * See also this function to know which pixel type is used.
+     *
+     * @param server the input image
+     * @return a builder to create an instance of this class
+     * @throws IllegalArgumentException if the provided image has less than one channel
+     */
+    public static <T extends RealType<T>> ImgBuilder<? extends RealType<?>> createRealBuilder(ImageServer<BufferedImage> server) {
+        T type = getRealTypeUnsafe(server.getPixelType());
+        return createRealBuilder(server, type);
+    }
+
+    /**
+     * Create a builder from an {@link ImageServer}, where the type is specified and an instance of {@link RealType}.
+     * <p>
+     * Note that the type must be compatible for this to work; see {@link #createBuilder(ImageServer, NumericType)}
+     * for more information, and/or check the type against the type returned by {@link #getRealType(PixelType)}.
+     * <p>
+     * Note that for an RGB image, this will give 3 channels with {@link UnsignedByteType}, rather than using {@link ARGBType}.
+     *
+     * @param server the input image
+     * @return a builder to create an instance of this class
+     * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
+     *         the provided image has less than one channel
+     * @see #createRgbBuilder(ImageServer)
+     */
+    public static <T extends RealType<T>> ImgBuilder<T> createRealBuilder(ImageServer<BufferedImage> server, T type) {
+        return createBuilder(server, type);
     }
 
     /**
@@ -226,7 +230,7 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * @return this builder
      * @throws NullPointerException if the provided cache is null
      */
-    public ImgBuilder<T, A> cellCache(CellCache cellCache) {
+    public ImgBuilder<T> cellCache(CellCache cellCache) {
         this.cellCache = Objects.requireNonNull(cellCache);
         return this;
     }
@@ -274,8 +278,18 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
             ));
         }
 
-        List<TileRequest> tiles = new ArrayList<>(server.getTileRequestManager().getTileRequestsForLevel(level));
+        if (type instanceof NativeType) {
+            @SuppressWarnings({"unchecked", "rawtypes"}) // Type checked in constructor
+            RandomAccessibleInterval<T> img = createLazyImage((NativeType)type, level);
+            return img;
+        } else {
+            // This code should not be reached, since we checked the type in the constructor
+            throw new IllegalArgumentException(type + " is not an instanceof NativeType");
+        }
+    }
 
+    private <S extends NativeType<S>> LazyCellImg<S, ?> createLazyImage(S type, int level) {
+        List<TileRequest> tiles = new ArrayList<>(server.getTileRequestManager().getTileRequestsForLevel(level));
         return new LazyCellImg<>(
                 new CellGrid(
                         new long[] {
@@ -318,9 +332,10 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
      * applied. The ith returned {@link RandomAccessibleInterval} corresponds to the ith provided downsample
      * @throws IllegalArgumentException if one of the provided downsamples is not greater than 0
      */
-    public List<RandomAccessibleInterval<T>> buildForDownsamples(List<Double> downsamples) {
+    public List<RandomAccessibleInterval<T>> buildForDownsamples(List<? extends Number> downsamples) {
         return downsamples.stream()
-                .map(this::buildForDownsample)
+                .mapToDouble(Number::doubleValue)
+                .mapToObj(this::buildForDownsample)
                 .toList();
     }
 
@@ -349,22 +364,18 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         }
 
         int level = ServerTools.getPreferredResolutionLevel(server, downsample);
+        RandomAccessibleInterval<T> imgLevel = buildForLevel(level);
 
-        if (server.getMetadata().getChannelType() == ImageServerMetadata.ChannelType.CLASSIFICATION) {
-            return AccessibleScaler.scaleWithNearestNeighborInterpolation(
-                    buildForLevel(level),
-                    server.getDownsampleForResolution(level) / downsample
-            );
+        double scale = server.getDownsampleForResolution(level) / downsample;
+        if (server.getMetadata().getChannelType() != ImageServerMetadata.ChannelType.CLASSIFICATION) {
+            return AccessibleScaler.scaleWithLinearInterpolation(imgLevel, scale);
         } else {
-            return AccessibleScaler.scaleWithLinearInterpolation(
-                    buildForLevel(level),
-                    server.getDownsampleForResolution(level) / downsample
-            );
+            return AccessibleScaler.scaleWithNearestNeighborInterpolation(imgLevel, scale);
         }
     }
 
-    private static <T> void checkType(ImageServer<?> server, T type) {
-        if (server.isRGB()) {
+    private static <T> void checkType(ImageServer<?> server, T type, int nChannels) {
+        if (server.isRGB() && nChannels == 1) {
             if (!(type instanceof ARGBType)) {
                 throw new IllegalArgumentException(String.format(
                         "The provided type %s is not an ARGBType, which is the one expected for RGB images",
@@ -372,76 +383,21 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
                 ));
             }
         } else {
-            switch (server.getPixelType()) {
-                case UINT8 -> {
-                    if (!(type instanceof UnsignedByteType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a ByteType, which is the one expected for non-RGB UINT8 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case INT8 -> {
-                    if (!(type instanceof ByteType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a UnsignedByteType, which is the one expected for non-RGB INT8 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case UINT16 -> {
-                    if (!(type instanceof UnsignedShortType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a UnsignedShortType, which is the one expected for non-RGB UINT16 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case INT16 -> {
-                    if (!(type instanceof ShortType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a ShortType, which is the one expected for non-RGB INT16 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case UINT32 -> {
-                    if (!(type instanceof UnsignedIntType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a UnsignedIntType, which is the one expected for non-RGB UINT32 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case INT32 -> {
-                    if (!(type instanceof IntType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a IntType, which is the one expected for non-RGB INT32 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case FLOAT32 -> {
-                    if (!(type instanceof FloatType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a FloatType, which is the one expected for non-RGB FLOAT32 images",
-                                type.getClass()
-                        ));
-                    }
-                }
-                case FLOAT64 -> {
-                    if (!(type instanceof DoubleType)) {
-                        throw new IllegalArgumentException(String.format(
-                                "The provided type %s is not a DoubleType, which is the one expected for non-RGB FLOAT64 images",
-                                type.getClass()
-                        ));
-                    }
-                }
+            var pixelType = server.getPixelType();
+            var expectedType = getRealTypeUnsafe(pixelType);
+            if (!expectedType.getClass().isInstance(type)) {
+                throw new IllegalArgumentException(String.format(
+                        "The provided type %s is not %s, which is the one expected for %s images",
+                        type.getClass(),
+                        expectedType.getClass().getSimpleName(),
+                        pixelType
+                ));
             }
         }
     }
 
-    private Cell<A> createCell(TileRequest tile) {
+
+    private Cell<? extends SizableDataAccess> createCell(TileRequest tile) {
         BufferedImage image;
         try {
             image = server.readRegion(tile.getRegionRequest());
@@ -452,7 +408,97 @@ public class ImgBuilder<T extends NativeType<T> & NumericType<T>, A extends Siza
         return new Cell<>(
                 new int[]{ image.getWidth(), image.getHeight(), numberOfChannels, 1, 1 },
                 new long[]{ tile.getTileX(), tile.getTileY(), 0, tile.getZ(), tile.getT()},
-                cellCreator.apply(image)
+                createAccess(image)
         );
     }
+
+    private SizableDataAccess createAccess(BufferedImage img) {
+        if (server.isRGB()) {
+            if (numberOfChannels == 1) {
+                return new ArgbBufferedImageAccess(img);
+            } else {
+                return new ByteBufferedImageAccess(img);
+            }
+        } else {
+            var raster = img.getRaster();
+            return switch (server.getPixelType()) {
+                case UINT8, INT8 -> new ByteRasterAccess(raster);
+                case UINT16, INT16 -> new ShortRasterAccess(raster);
+                case UINT32, INT32 -> new IntRasterAccess(raster);
+                case FLOAT32 -> new FloatRasterAccess(raster);
+                case FLOAT64 ->  new DoubleRasterAccess(raster);
+            };
+        }
+    }
+
+    /**
+     * Create an instance of the default type for a server when using {@link #createBuilder(ImageServer)}.
+     * If {@code server.isRGB()} returns true, this will return the value of {@link #getRgbType()},
+     * otherwise it will return the value of {@link #getRealType(ImageServer)}.
+     * @param server the image server
+     * @return the default numeric type to create images for this server
+     */
+    public static NumericType<?> getDefaultType(ImageServer<?> server) {
+        return getDefaultTypeUnsafe(server);
+    }
+
+    @SuppressWarnings("unchecked") // Private method - must only be used internally with appropriate return value
+    private static <T extends NumericType<T>> T getDefaultTypeUnsafe(ImageServer<?> server) {
+        if (server.isRGB())
+            return (T)getRgbType();
+        else
+            return (T)getRealTypeUnsafe(server.getPixelType());
+    }
+
+    /**
+     * Create an instance of the default type for an RGB image, using a packed int representation so
+     * that all RGB values can be contained in a single 'channel'.
+     * @return a new instance of {@link ARGBType}.
+     */
+    public static ARGBType getRgbType() {
+        return new ARGBType();
+    }
+
+    /**
+     * Create an instance of the default {@link RealType} for an image server.
+     * If the image is RGB, this will return {@link UnsignedByteType} - indicating that channels should be
+     * treated separately, and not used a packed representation as with {@link #getRgbType()}.
+     * @param server the image server
+     * @return the default real type to create images for this server
+     */
+    public static RealType<?> getRealType(ImageServer<?> server) {
+        return getRealTypeUnsafe(server.getPixelType());
+    }
+
+    /**
+     * Create the default {@link RealType} for a pixel type.
+     * <p>
+     * <b>Warning!</b> The return value is unchecked. It is possible to write code that compiles but fails with
+     * a {@link ClassCastException} at runtime because the caller assigns the wrong class, e.g.
+     * <code>
+     *     FloatType type = createRealType(PixelType.UINT8); // Compiler cannot check return type!
+     * </code>
+     * @param pixelType the pixel type of the image server
+     * @return an instanceof {@link RealType} suitable to represent the given pixel type
+     * @param <T> generic parameter for the type
+     */
+    public static <T extends RealType<T>> T getRealType(PixelType pixelType) {
+        return getRealTypeUnsafe(pixelType);
+    }
+
+    @SuppressWarnings("unchecked") // Private method - must only be used internally with appropriate return value
+    private static <T extends RealType<T>> T getRealTypeUnsafe(PixelType pixelType) {
+        Objects.requireNonNull(pixelType, "Pixel type must not be null");
+        return switch (pixelType) {
+            case UINT8 -> (T)new UnsignedByteType();
+            case INT8 -> (T)new ByteType();
+            case UINT16 -> (T)new UnsignedShortType();
+            case INT16 -> (T)new ShortType();
+            case UINT32 -> (T)new UnsignedIntType();
+            case INT32 -> (T)new IntType();
+            case FLOAT32 -> (T)new FloatType();
+            case FLOAT64 -> (T)new DoubleType();
+        };
+    }
+
 }

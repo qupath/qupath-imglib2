@@ -38,6 +38,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TestImgBuilder {
 
     @Test
+    void Check_Fail_Fast() throws Exception {
+        boolean isRgb = false;
+        PixelType pixelType = PixelType.UINT8;
+        ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
+
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ImgBuilder.createBuilder(imageServer, new FloatType()).buildForLevel(0));
+
+        imageServer.close();
+    }
+
+    @Test
+    void Check_Fail_With_Wrong_Type() throws Exception {
+        boolean isRgb = false;
+        PixelType pixelType = PixelType.UINT8;
+        ImageServer<BufferedImage> imageServer = new GenericImageServer(isRgb, pixelType);
+
+        Assertions.assertThrows(ClassCastException.class,
+                () -> {
+                    FloatType myType = ImgBuilder.getRealType(imageServer.getPixelType());
+                    ImgBuilder.createBuilder(imageServer, myType).buildForLevel(0);
+                });
+
+        imageServer.close();
+    }
+
+    @Test
     void Check_Rgb_Server() throws Exception {
         boolean isRgb = true;
         PixelType pixelType = PixelType.UINT8;
