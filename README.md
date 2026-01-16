@@ -16,13 +16,13 @@ var server = getCurrentServer()
 
 // Create Img<T> from level
 var level = 0
-var img = ImgBuilder.createBuilder(server).build().createForLevel(level)
+var img = ImgBuilder.createBuilder(server).buildForLevel(level)
 println img
 
 
 // Create RandomAccessibleInterval<T> from downsample
 var downsample = 1
-var randomAccessible = ImgBuilder.createBuilder(server).build().createForDownsample(downsample)
+var randomAccessible = ImgBuilder.createBuilder(server).buildForDownsample(downsample)
 println randomAccessible
 
 
@@ -37,7 +37,7 @@ var type = new ARGBType()   // only valid if server represents a RGB image. Othe
                             // net.imglib2.type.numeric.integer.IntType for INT32 images
                             // net.imglib2.type.numeric.real.FloatType for FLOAT32 images
                             // net.imglib2.type.numeric.real.DoubleType for FLOAT64 images
-var safeImg = ImgBuilder.createBuilder(server, type).build().createForLevel(level)
+var safeImg = ImgBuilder.createBuilder(server, type).buildForLevel(level)
 println safeImg
 
 
