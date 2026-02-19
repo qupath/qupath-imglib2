@@ -161,6 +161,27 @@ public class Utils {
         }
     }
 
+    public static void assertArgbRandomAccessibleEquals(RandomAccessibleInterval<ARGBType> accessible, int[][] expectedPixels) {
+        Assertions.assertEquals(expectedPixels.length, accessible.dimension(0));
+        Assertions.assertEquals(expectedPixels[0].length, accessible.dimension(1));
+
+        int[] position = new int[accessible.numDimensions()];
+        Cursor<ARGBType> cursor = accessible.localizingCursor();
+
+        while (cursor.hasNext()) {
+            ARGBType pixel = cursor.next();
+            cursor.localize(position);
+            int x = position[1];
+            int y = position[0];
+
+            Assertions.assertEquals(
+                    expectedPixels[y][x],
+                    pixel.get(),
+                    0.0000000001        // to avoid rounding errors
+            );
+        }
+    }
+
     public static void assertBufferedImagesEqual(BufferedImage expectedImage, BufferedImage actualImage, double delta) {
         Assertions.assertEquals(expectedImage.getWidth(), actualImage.getWidth());
         Assertions.assertEquals(expectedImage.getHeight(), actualImage.getHeight());

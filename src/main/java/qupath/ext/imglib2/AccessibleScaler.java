@@ -36,9 +36,10 @@ public class AccessibleScaler {
      *              less than or equal to 0
      * @return the input if the provided scale is 1, or a new scaled {@link RandomAccessibleInterval} otherwise
      * @param <T> the type of elements of the random accessible interval. It must be {@link net.imglib2.type.numeric.ARGBType}
-     *            or an instance of {@link net.imglib2.type.numeric.RealType}
+     *            or an instance of {@link net.imglib2.type.numeric.RealType}, otherwise a {@link IllegalArgumentException}
+     *            will be thrown when accessing the output
      * @throws IllegalArgumentException if the input interval has at least one minimum different from 0, if the provided scale is less
-     * than or equal to 0, if the input interval has less than two dimensions, or if the type T is invalid (see above)
+     * than or equal to 0, or if the input interval has less than two dimensions
      */
     public static <T extends NumericType<T>> RandomAccessibleInterval<T> scaleWithLinearInterpolation(
             RandomAccessibleInterval<T> input,
