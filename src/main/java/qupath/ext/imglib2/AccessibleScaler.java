@@ -3,7 +3,6 @@ package qupath.ext.imglib2;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.interpolation.InterpolatorFactory;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.interpolation.randomaccess.NearestNeighborInterpolatorFactory;
 import net.imglib2.realtransform.AffineGet;
 import net.imglib2.realtransform.RealViews;
@@ -11,6 +10,7 @@ import net.imglib2.realtransform.Scale2D;
 import net.imglib2.realtransform.Translation2D;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
+import qupath.ext.imglib2.interpolators.LinearInterpolationFactory;
 
 import java.util.Arrays;
 import java.util.stream.LongStream;
@@ -35,7 +35,9 @@ public class AccessibleScaler {
      * @param scale the scale to apply to the first two dimensions of the input {@link RandomAccessibleInterval}. Shouldn't be
      *              less than or equal to 0
      * @return the input if the provided scale is 1, or a new scaled {@link RandomAccessibleInterval} otherwise
-     * @param <T> the type of elements of the random accessible interval
+     * @param <T> the type of elements of the random accessible interval. It must be {@link net.imglib2.type.numeric.ARGBType}
+     *            or an instance of {@link net.imglib2.type.numeric.RealType}, otherwise a {@link IllegalArgumentException}
+     *            will be thrown when accessing the output
      * @throws IllegalArgumentException if the input interval has at least one minimum different from 0, if the provided scale is less
      * than or equal to 0, or if the input interval has less than two dimensions
      */
@@ -43,7 +45,7 @@ public class AccessibleScaler {
             RandomAccessibleInterval<T> input,
             double scale
     ) {
-        return scale(input, scale, new NLinearInterpolatorFactory<>());
+        return scale(input, scale, new LinearInterpolationFactory<>());
     }
 
     /**
