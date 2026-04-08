@@ -1,6 +1,6 @@
 package qupath.ext.imglib2.accesses;
 
-import net.imglib2.img.basictypeaccess.DoubleAccess;
+import net.imglib2.img.basictypeaccess.array.DoubleArray;
 import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
@@ -9,20 +9,15 @@ import java.awt.image.DataBufferDouble;
 import java.awt.image.Raster;
 
 /**
- * A {@link DoubleAccess} whose elements are computed from a {@link Raster}.
+ * A {@link DoubleArray} whose elements are computed from a {@link Raster}.
  * <p>
- * This {@link DoubleAccess} is immutable; any attempt to changes its values will result in a
+ * This {@link DoubleArray} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  * <p>
  * This data access is marked as volatile but always contain valid data.
  */
-public class DoubleRasterAccess implements DoubleAccess, SizableDataAccess, VolatileAccess {
+public class DoubleRasterAccess extends DoubleArray implements SizableDataAccess, VolatileAccess {
 
-    private final Raster raster;
-    private final DataBuffer dataBuffer;
-    private final int width;
-    private final int planeSize;
-    private final boolean canUseDataBuffer;
     private final int size;
 
     /**
@@ -32,28 +27,9 @@ public class DoubleRasterAccess implements DoubleAccess, SizableDataAccess, Vola
      * @throws NullPointerException if the provided image is null
      */
     public DoubleRasterAccess(Raster raster) {
-        this.raster = raster;
-        this.dataBuffer = this.raster.getDataBuffer();
+        super(createArrayFromRaster(raster));
 
-        this.width = this.raster.getWidth();
-        this.planeSize = width * this.raster.getHeight();
-        
-        this.canUseDataBuffer = this.dataBuffer instanceof DataBufferDouble &&
-                AccessTools.isSampleModelDirectlyUsable(this.raster);
-
-        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
-    }
-
-    @Override
-    public double getValue(int index) {
-        int b = index / planeSize;
-        int xyIndex = index % planeSize;
-
-        if (canUseDataBuffer) {
-            return dataBuffer.getElemDouble(b, xyIndex);
-        } else {
-            return raster.getSampleDouble(xyIndex % width, xyIndex / width, b);
-        }
+        this.size = AccessTools.getSizeOfDataBufferInBytes(raster.getDataBuffer());
     }
 
     @Override
@@ -69,5 +45,33 @@ public class DoubleRasterAccess implements DoubleAccess, SizableDataAccess, Vola
     @Override
     public boolean isValid() {
         return true;
+    }
+
+    private static double[] createArrayFromRaster(Raster raster) {
+        int width = raster.getWidth();
+        int height = raster.getHeight();
+        int planeSize = width * height;
+        int numBands = raster.getNumBands();
+
+        double[] array = new double[planeSize * numBands];
+        if (AccessTools.isSampleModelDirectlyUsable(raster) && raster.getDataBuffer() instanceof DataBufferDouble) {
+            DataBuffer dataBuffer = raster.getDataBuffer();
+
+            for (int b=0; b<numBands; b++) {
+                for (int i=0; i<planeSize; i++) {
+                    array[i + b * planeSize] = dataBuffer.getElemDouble(b, i);
+                }
+            }
+        } else {
+            for (int b=0; b<numBands; b++) {
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        array[x + y * width + b * planeSize] = raster.getSampleDouble(x, y, b);
+                    }
+                }
+            }
+        }
+
+        return array;
     }
 }

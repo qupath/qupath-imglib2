@@ -36,9 +36,9 @@ public class TestDoubleRasterAccess {
         DataBuffer dataBuffer = new DataBufferDouble(pixels, nChannels);
         Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        DoubleRasterAccess bufferedImageAccess = new DoubleRasterAccess(raster);
+        DoubleRasterAccess rasterAccess = new DoubleRasterAccess(raster);
 
-        assertArrayEqualsDoubleAccess(expectedPixels, bufferedImageAccess);
+        assertArrayEqualsDoubleAccess(expectedPixels, rasterAccess);
     }
 
     private void assertArrayEqualsDoubleAccess(double[] expectedArray, DoubleAccess access) {

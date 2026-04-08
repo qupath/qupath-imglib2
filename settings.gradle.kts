@@ -10,7 +10,7 @@ pluginManagement {
 rootProject.name = "qupath-imglib2"
 
 // Used for version catalogs (including Java compatibility)
-val qupathVersion = "0.6.0"
+val qupathVersion = "0.7.0"
 val sciJavaVersion = "43.0.0"
 
 dependencyResolutionManagement {

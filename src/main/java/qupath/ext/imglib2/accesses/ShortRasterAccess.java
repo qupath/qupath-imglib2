@@ -1,6 +1,6 @@
 package qupath.ext.imglib2.accesses;
 
-import net.imglib2.img.basictypeaccess.ShortAccess;
+import net.imglib2.img.basictypeaccess.array.ShortArray;
 import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
@@ -10,20 +10,15 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.Raster;
 
 /**
- * A {@link ShortAccess} whose elements are computed from a {@link Raster}.
+ * A {@link ShortArray} whose elements are computed from a {@link Raster}.
  * <p>
- * This {@link ShortAccess} is immutable; any attempt to changes its values will result in a
+ * This {@link ShortArray} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  * <p>
  * This data access is marked as volatile but always contain valid data.
  */
-public class ShortRasterAccess implements ShortAccess, SizableDataAccess, VolatileAccess {
+public class ShortRasterAccess extends ShortArray implements SizableDataAccess, VolatileAccess {
 
-    private final Raster raster;
-    private final DataBuffer dataBuffer;
-    private final int width;
-    private final int planeSize;
-    private final boolean canUseDataBuffer;
     private final int size;
 
     /**
@@ -33,28 +28,9 @@ public class ShortRasterAccess implements ShortAccess, SizableDataAccess, Volati
      * @throws NullPointerException if the provided image is null
      */
     public ShortRasterAccess(Raster raster) {
-        this.raster = raster;
-        this.dataBuffer = this.raster.getDataBuffer();
+        super(createArrayFromRaster(raster));
 
-        this.width = this.raster.getWidth();
-        this.planeSize = width * this.raster.getHeight();
-
-        this.canUseDataBuffer = (this.dataBuffer instanceof DataBufferUShort || this.dataBuffer instanceof DataBufferShort) &&
-                AccessTools.isSampleModelDirectlyUsable(this.raster);
-
-        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
-    }
-
-    @Override
-    public short getValue(int index) {
-        int b = index / planeSize;
-        int xyIndex = index % planeSize;
-
-        if (canUseDataBuffer) {
-            return (short) dataBuffer.getElem(b, xyIndex);
-        } else {
-            return (short) raster.getSample(xyIndex % width, xyIndex / width, b);
-        }
+        this.size = AccessTools.getSizeOfDataBufferInBytes(raster.getDataBuffer());
     }
 
     @Override
@@ -70,5 +46,33 @@ public class ShortRasterAccess implements ShortAccess, SizableDataAccess, Volati
     @Override
     public boolean isValid() {
         return true;
+    }
+
+    private static short[] createArrayFromRaster(Raster raster) {
+        int width = raster.getWidth();
+        int height = raster.getHeight();
+        int planeSize = width * height;
+        int numBands = raster.getNumBands();
+
+        short[] array = new short[planeSize * numBands];
+        if (AccessTools.isSampleModelDirectlyUsable(raster) && (raster.getDataBuffer() instanceof DataBufferUShort || raster.getDataBuffer() instanceof DataBufferShort)) {
+            DataBuffer dataBuffer = raster.getDataBuffer();
+
+            for (int b=0; b<numBands; b++) {
+                for (int i=0; i<planeSize; i++) {
+                    array[i + b * planeSize] = (short) dataBuffer.getElem(b, i);
+                }
+            }
+        } else {
+            for (int b=0; b<numBands; b++) {
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        array[x + y * width + b * planeSize] = (short) raster.getSample(x, y, b);
+                    }
+                }
+            }
+        }
+
+        return array;
     }
 }

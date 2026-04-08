@@ -1,6 +1,6 @@
 package qupath.ext.imglib2.accesses;
 
-import net.imglib2.img.basictypeaccess.IntAccess;
+import net.imglib2.img.basictypeaccess.array.IntArray;
 import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 import qupath.lib.common.ColorTools;
@@ -8,27 +8,22 @@ import qupath.lib.common.ColorTools;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferInt;
+import java.awt.image.Raster;
 import java.awt.image.SinglePixelPackedSampleModel;
 
 /**
- * An {@link IntAccess} whose elements are computed from an (A)RGB {@link BufferedImage}.
+ * An {@link IntArray} whose elements are computed from an (A)RGB {@link BufferedImage}.
  * <p>
  * If the alpha component is not provided (e.g. if the {@link BufferedImage} has the {@link BufferedImage#TYPE_INT_RGB} type),
  * then the alpha component of each pixel is considered to be 255.
  * <p>
- * This {@link IntAccess} is immutable; any attempt to changes its values will result in a
+ * This {@link IntArray} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  * <p>
  * This data access is marked as volatile but always contain valid data.
  */
-public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess, VolatileAccess {
+public class ArgbBufferedImageAccess extends IntArray implements SizableDataAccess, VolatileAccess {
 
-    private final BufferedImage image;
-    private final DataBuffer dataBuffer;
-    private final int width;
-    private final int planeSize;
-    private final boolean canUseDataBuffer;
-    private final boolean alphaProvided;
     private final int size;
 
     /**
@@ -38,39 +33,45 @@ public class ArgbBufferedImageAccess implements IntAccess, SizableDataAccess, Vo
      * @throws NullPointerException if the provided image is null
      */
     public ArgbBufferedImageAccess(BufferedImage image) {
-        this.image = image;
-        this.dataBuffer = this.image.getRaster().getDataBuffer();
+        super(createArrayFromImage(image));
 
-        this.width = this.image.getWidth();
-        this.planeSize = width * this.image.getHeight();
-
-        this.canUseDataBuffer = image.getRaster().getDataBuffer() instanceof DataBufferInt &&
-                image.getRaster().getSampleModel() instanceof SinglePixelPackedSampleModel;
-        this.alphaProvided = image.getType() == BufferedImage.TYPE_INT_ARGB;
-
-        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
+        this.size = AccessTools.getSizeOfDataBufferInBytes(image.getRaster().getDataBuffer());
     }
 
-    @Override
-    public int getValue(int index) {
-        int xyIndex = index % planeSize;
+    private static int[] createArrayFromImage(BufferedImage image) {
+        Raster raster = image.getRaster();
+        int width = raster.getWidth();
+        int height = raster.getHeight();
+        int planeSize = width * height;
 
-        if (canUseDataBuffer) {
-            int pixel = dataBuffer.getElem(0, xyIndex);
+        int[] array = new int[planeSize];
+        if (raster.getSampleModel() instanceof SinglePixelPackedSampleModel && raster.getDataBuffer() instanceof DataBufferInt) {
+            DataBuffer dataBuffer = raster.getDataBuffer();
+            boolean alphaProvided = image.getType() == BufferedImage.TYPE_INT_ARGB;
 
-            if (alphaProvided) {
-                return pixel;
-            } else {
-                return ColorTools.packARGB(
-                        255,
-                        ColorTools.red(pixel),
-                        ColorTools.green(pixel),
-                        ColorTools.blue(pixel)
-                );
+            for (int i=0; i<planeSize; i++) {
+                int pixel = dataBuffer.getElem(0, i);
+
+                if (alphaProvided) {
+                    array[i] = pixel;
+                } else {
+                    array[i] = ColorTools.packARGB(
+                            255,
+                            ColorTools.red(pixel),
+                            ColorTools.green(pixel),
+                            ColorTools.blue(pixel)
+                    );
+                }
             }
         } else {
-            return image.getRGB(xyIndex % width, xyIndex / width);
+            for (int y=0; y<height; y++) {
+                for (int x=0; x<width; x++) {
+                    array[x + y * width] = image.getRGB(x, y);
+                }
+            }
         }
+
+        return array;
     }
 
     @Override

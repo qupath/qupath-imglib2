@@ -1,6 +1,6 @@
 package qupath.ext.imglib2.accesses;
 
-import net.imglib2.img.basictypeaccess.IntAccess;
+import net.imglib2.img.basictypeaccess.array.IntArray;
 import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 
@@ -9,51 +9,27 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 
 /**
- * An {@link IntAccess} whose elements are computed from a {@link Raster}.
+ * An {@link IntArray} whose elements are computed from a {@link Raster}.
  * <p>
- * This {@link IntAccess} is immutable; any attempt to changes its values will result in a
+ * This {@link IntArray} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  * <p>
  * This data access is marked as volatile but always contain valid data.
  */
-public class IntRasterAccess implements IntAccess, SizableDataAccess, VolatileAccess {
+public class IntRasterAccess extends IntArray implements SizableDataAccess, VolatileAccess {
 
-    private final Raster raster;
-    private final DataBuffer dataBuffer;
-    private final int width;
-    private final int planeSize;
-    private final boolean canUseDataBuffer;
     private final int size;
 
     /**
      * Create the int raster access.
      *
      * @param raster the raster containing the values to return. Its pixels are expected to be stored in the int format
-     * @throws NullPointerException if the provided image is null
+     * @throws NullPointerException if the provided raster is null
      */
     public IntRasterAccess(Raster raster) {
-        this.raster = raster;
-        this.dataBuffer = this.raster.getDataBuffer();
+        super(createArrayFromRaster(raster));
 
-        this.width = this.raster.getWidth();
-        this.planeSize = width * this.raster.getHeight();
-
-        this.canUseDataBuffer = this.dataBuffer instanceof DataBufferInt &&
-                AccessTools.isSampleModelDirectlyUsable(this.raster);
-
-        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
-    }
-
-    @Override
-    public int getValue(int index) {
-        int b = index / planeSize;
-        int xyIndex = index % planeSize;
-
-        if (canUseDataBuffer) {
-            return dataBuffer.getElem(b, xyIndex);
-        } else {
-            return raster.getSample(xyIndex % width, xyIndex / width, b);
-        }
+        this.size = AccessTools.getSizeOfDataBufferInBytes(raster.getDataBuffer());
     }
 
     @Override
@@ -69,5 +45,33 @@ public class IntRasterAccess implements IntAccess, SizableDataAccess, VolatileAc
     @Override
     public boolean isValid() {
         return true;
+    }
+
+    private static int[] createArrayFromRaster(Raster raster) {
+        int width = raster.getWidth();
+        int height = raster.getHeight();
+        int planeSize = width * height;
+        int numBands = raster.getNumBands();
+
+        int[] array = new int[planeSize * numBands];
+        if (AccessTools.isSampleModelDirectlyUsable(raster) && raster.getDataBuffer() instanceof DataBufferInt) {
+            DataBuffer dataBuffer = raster.getDataBuffer();
+
+            for (int b=0; b<numBands; b++) {
+                for (int i=0; i<planeSize; i++) {
+                    array[i + b * planeSize] = dataBuffer.getElem(b, i);
+                }
+            }
+        } else {
+            for (int b=0; b<numBands; b++) {
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        array[x + y * width + b * planeSize] = raster.getSample(x, y, b);
+                    }
+                }
+            }
+        }
+
+        return array;
     }
 }

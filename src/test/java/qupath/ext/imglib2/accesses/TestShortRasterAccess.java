@@ -37,9 +37,9 @@ public class TestShortRasterAccess {
         DataBuffer dataBuffer = new DataBufferShort(pixels, nChannels);
         Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        ShortRasterAccess bufferedImageAccess = new ShortRasterAccess(raster);
+        ShortRasterAccess rasterAccess = new ShortRasterAccess(raster);
 
-        assertArrayEqualsShortAccess(expectedPixels, bufferedImageAccess);
+        assertArrayEqualsShortAccess(expectedPixels, rasterAccess);
     }
 
     @Test

@@ -36,9 +36,9 @@ public class TestByteRasterAccess {
         DataBuffer dataBuffer = new DataBufferByte(pixels, nChannels);
         Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        ByteRasterAccess bufferedImageAccess = new ByteRasterAccess(raster);
+        ByteRasterAccess rasterAccess = new ByteRasterAccess(raster);
 
-        assertArrayEqualsByteAccess(expectedPixels, bufferedImageAccess);
+        assertArrayEqualsByteAccess(expectedPixels, rasterAccess);
     }
 
     private void assertArrayEqualsByteAccess(byte[] expectedArray, ByteAccess access) {
