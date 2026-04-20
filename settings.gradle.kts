@@ -11,7 +11,7 @@ rootProject.name = "qupath-imglib2"
 
 // Used for version catalogs (including Java compatibility)
 val qupathVersion = "0.7.0"
-val sciJavaVersion = "43.0.0"
+val sciJavaVersion = "44.0.0"
 
 dependencyResolutionManagement {
 
@@ -28,8 +28,8 @@ dependencyResolutionManagement {
     }
 
     repositories {
-        maven("https://maven.scijava.org/content/groups/public/")
         mavenCentral()
+        maven("https://maven.scijava.org/content/groups/public/")
     }
 
 }
