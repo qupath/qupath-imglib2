@@ -36,9 +36,9 @@ public class TestIntRasterAccess {
         DataBuffer dataBuffer = new DataBufferInt(pixels, nChannels);
         Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        IntRasterAccess bufferedImageAccess = new IntRasterAccess(raster);
+        IntRasterAccess rasterAccess = new IntRasterAccess(raster);
 
-        assertArrayEqualsIntAccess(expectedPixels, bufferedImageAccess);
+        assertArrayEqualsIntAccess(expectedPixels, rasterAccess);
     }
 
     private void assertArrayEqualsIntAccess(int[] expectedArray, IntAccess access) {

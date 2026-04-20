@@ -45,19 +45,16 @@ class AccessTools {
      * @return the size of the provided data buffer in bytes
      */
     public static int getSizeOfDataBufferInBytes(DataBuffer dataBuffer) {
-        int bytesPerPixel;
-        if (dataBuffer instanceof DataBufferByte) {
-            bytesPerPixel = 1;
-        } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-            bytesPerPixel = 2;
-        } else if (dataBuffer instanceof DataBufferInt || dataBuffer instanceof DataBufferFloat) {
-            bytesPerPixel = 4;
-        } else  if (dataBuffer instanceof DataBufferDouble) {
-            bytesPerPixel = 8;
-        } else {
-            logger.warn("Unexpected data buffer {}. Considering each element of it takes 1 byte", dataBuffer);
-            bytesPerPixel = 1;
-        }
+        int bytesPerPixel = switch (dataBuffer) {
+            case DataBufferByte _ -> 1;
+            case DataBufferShort _, DataBufferUShort _ -> 2;
+            case DataBufferInt _, DataBufferFloat _ -> 4;
+            case DataBufferDouble _ -> 8;
+            default -> {
+                logger.warn("Unexpected data buffer {}. Considering each element of it takes 1 byte", dataBuffer);
+                yield 1;
+            }
+        };
 
         return bytesPerPixel * dataBuffer.getSize() * dataBuffer.getNumBanks();
     }

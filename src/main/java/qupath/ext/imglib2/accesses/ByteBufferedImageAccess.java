@@ -1,6 +1,6 @@
 package qupath.ext.imglib2.accesses;
 
-import net.imglib2.img.basictypeaccess.ByteAccess;
+import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import qupath.ext.imglib2.SizableDataAccess;
 import qupath.lib.common.ColorTools;
@@ -8,25 +8,21 @@ import qupath.lib.common.ColorTools;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferInt;
+import java.awt.image.Raster;
 import java.awt.image.SinglePixelPackedSampleModel;
 
 /**
- * An {@link ByteAccess} whose elements are computed from an RGB {@link BufferedImage}.
+ * An {@link ByteArray} whose elements are computed from an RGB {@link BufferedImage}.
  * <p>
  * The alpha component is not taken into account.
  * <p>
- * This {@link ByteAccess} is immutable; any attempt to changes its values will result in a
+ * This {@link ByteArray} is immutable; any attempt to changes its values will result in a
  * {@link UnsupportedOperationException}.
  * <p>
  * This data access is marked as volatile but always contain valid data.
  */
-public class ByteBufferedImageAccess implements ByteAccess, SizableDataAccess, VolatileAccess {
+public class ByteBufferedImageAccess extends ByteArray implements SizableDataAccess, VolatileAccess {
 
-    private final BufferedImage image;
-    private final DataBuffer dataBuffer;
-    private final int width;
-    private final int planeSize;
-    private final boolean canUseDataBuffer;
     private final int size;
 
     /**
@@ -36,33 +32,9 @@ public class ByteBufferedImageAccess implements ByteAccess, SizableDataAccess, V
      * @throws NullPointerException if the provided image is null
      */
     public ByteBufferedImageAccess(BufferedImage image) {
-        this.image = image;
-        this.dataBuffer = this.image.getRaster().getDataBuffer();
+        super(createArrayFromImage(image));
 
-        this.width = this.image.getWidth();
-        this.planeSize = width * this.image.getHeight();
-
-        this.canUseDataBuffer = image.getRaster().getDataBuffer() instanceof DataBufferInt &&
-                image.getRaster().getSampleModel() instanceof SinglePixelPackedSampleModel;
-
-        this.size = AccessTools.getSizeOfDataBufferInBytes(this.dataBuffer);
-    }
-
-    @Override
-    public byte getValue(int index) {
-        int channel = index / planeSize;
-        int xyIndex = index % planeSize;
-
-        int pixel = canUseDataBuffer ?
-                dataBuffer.getElem(0, xyIndex) :
-                image.getRGB(xyIndex % width, xyIndex / width);
-
-        return switch (channel) {
-            case 0 -> (byte) ColorTools.red(pixel);
-            case 1 -> (byte) ColorTools.green(pixel);
-            case 2 -> (byte) ColorTools.blue(pixel);
-            default -> throw new IllegalArgumentException(String.format("The provided index %d is out of bounds", index));
-        };
+        this.size = AccessTools.getSizeOfDataBufferInBytes(image.getRaster().getDataBuffer());
     }
 
     @Override
@@ -78,5 +50,48 @@ public class ByteBufferedImageAccess implements ByteAccess, SizableDataAccess, V
     @Override
     public boolean isValid() {
         return true;
+    }
+
+    private static byte[] createArrayFromImage(BufferedImage image) {
+        Raster raster = image.getRaster();
+        int width = raster.getWidth();
+        int height = raster.getHeight();
+        int planeSize = width * height;
+        int numBands = 3;
+
+        byte[] array = new byte[planeSize * numBands];
+        if (raster.getSampleModel() instanceof SinglePixelPackedSampleModel && raster.getDataBuffer() instanceof DataBufferInt) {
+            DataBuffer dataBuffer = raster.getDataBuffer();
+
+            for (int b=0; b<numBands; b++) {
+                for (int i=0; i<planeSize; i++) {
+                    int pixel = dataBuffer.getElem(0, i);
+
+                    array[i + b * planeSize] = (byte) switch (b) {
+                        case 0 -> ColorTools.red(pixel);
+                        case 1 -> ColorTools.green(pixel);
+                        case 2 -> ColorTools.blue(pixel);
+                        default -> throw new IllegalArgumentException(String.format("The provided channel %d is out of bounds", b));
+                    };
+                }
+            }
+        } else {
+            for (int b=0; b<numBands; b++) {
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        int pixel = image.getRGB(x, y);
+
+                        array[x + y * width + b * planeSize] = (byte) switch (b) {
+                            case 0 -> ColorTools.red(pixel);
+                            case 1 -> ColorTools.green(pixel);
+                            case 2 -> ColorTools.blue(pixel);
+                            default -> throw new IllegalArgumentException(String.format("The provided channel %d is out of bounds", b));
+                        };
+                    }
+                }
+            }
+        }
+
+        return array;
     }
 }

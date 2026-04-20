@@ -36,9 +36,9 @@ public class TestFloatRasterAccess {
         DataBuffer dataBuffer = new DataBufferFloat(pixels, nChannels);
         Raster raster = Utils.createRaster(dataBuffer, width, height, nChannels);
 
-        FloatRasterAccess bufferedImageAccess = new FloatRasterAccess(raster);
+        FloatRasterAccess rasterAccess = new FloatRasterAccess(raster);
 
-        assertArrayEqualsFloatAccess(expectedPixels, bufferedImageAccess);
+        assertArrayEqualsFloatAccess(expectedPixels, rasterAccess);
     }
 
     private void assertArrayEqualsFloatAccess(float[] expectedArray, FloatAccess access) {
