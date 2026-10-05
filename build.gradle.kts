@@ -25,8 +25,8 @@ dependencies {
     api(sciJava.imglib2.imglib2)
     implementation(sciJava.imglib2.realtransform)
 
-    implementation("ome.zarr:ome-zarr-java:0.7.3")
-    implementation("ome.zarr:ome-zarr-zarrjava:0.7.3")
+    implementation("ome.zarr:ome-zarr-java:0.9.3")
+    implementation("ome.zarr:ome-zarr-zarrjava:0.9.3")
 //    implementation("ome.zarr:ome-zarr-n5:0.7.3")
 
     // QuPath
