@@ -1,5 +1,6 @@
 package qupath.ext.zarr;
 
+import java.util.Arrays;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -58,21 +59,13 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
         AxisCalibration[] axes = contents.axesPerLevel[0];
         PixelCalibration cal = parsePixelCalibration(axes);
         for (int r = 0; r < contents.numResolutionLevels(); r++) {
-            RandomAccessibleInterval<T> img = contents.asImg(r);
-            if (img.numDimensions() > 5 || img.numDimensions() < 2) {
-                throw new IOException("Invalid image dimensions: " + img.numDimensions());
-            }
-            // Switch XYCZT to XYZCT
-            if (img.numDimensions() > 3) {
-                img = Views.moveAxis(img, 2, 3);
-            }
-            // Ensure we have enough dimensions
-            while (img.numDimensions() < 5) {
-                img = Views.addDimension(img, 0, 0);
-            }
+            RandomAccessibleInterval<T> img = standardizeAxes(contents.asImg(r), contents);
             resolutions.add(img);
         }
-        var builder = ImgLib2ImageServer.builder(resolutions);
+        String argsString = args.length == 0 ? "" : " (" + Arrays.toString(args) + ")";
+        var builder = ImgLib2ImageServer.builder(resolutions)
+                .persistentId(getClass().getSimpleName() + "-" + uri + argsString);
+
         var channels = parseChannels(contents.omero);
         long expectedChannels = resolutions.getFirst().dimension(ImgBuilder.AXIS_CHANNEL);
         if (channels.size() == expectedChannels) {
@@ -85,22 +78,102 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
                 .build();
     }
 
+    private static <T> RandomAccessibleInterval<T> standardizeAxes(RandomAccessibleInterval<T> img, PyramidContents<?> contents) {
+        // Ensure the ordering is what we expect
+        checkXYAxisOrThrow(contents);
+        // We expect XYZCT, but some can be missing.
+        // We need XYCZT, without any missing.
+        int nAxes = contents.numDimensions();
+        return switch (nAxes) {
+            case 2 -> ensureDims(img, 5);
+            case 3 -> fixAxes3(img, contents);
+            case 4 -> fixAxes4(img, contents);
+            case 5 -> Views.moveAxis(img, 2, 3); // Switch XYCZT to XYZCT
+            default -> null;
+        };
+    }
+
+    private static <T> RandomAccessibleInterval<T> fixAxes4(RandomAccessibleInterval<T> img, PyramidContents<?> contents) {
+        assert img.numDimensions() == 4;
+        // One axis is missing - add it, then rearrange
+        img = ensureDims(img, 5);
+        if (!contents.hasAxis(AxisCalibration.C)) {
+            // Input: XYZTC, Output: XYCZT
+            return Views.moveAxis(img, 4, 2);
+        } else if (!contents.hasAxis(AxisCalibration.Z)) {
+            // Input: XYCTZ, Output: XYCZT
+            return Views.moveAxis(img, 4, 3);
+        } else if (!contents.hasAxis(AxisCalibration.T)) {
+            // Input: XYZCT, Output: XYCZT
+            return Views.moveAxis(img, 2, 3);
+        } else {
+            throw new IllegalArgumentException("Unexpected axes " + Arrays.toString(contents.axesPerLevel[0]));
+        }
+    }
+
+    private static <T> RandomAccessibleInterval<T> fixAxes3(RandomAccessibleInterval<T> img, PyramidContents<?> contents) {
+        assert img.numDimensions() == 3;
+        // One (non-XY) axis is present - add the missing 2, then rearrange
+        img = ensureDims(img, 5);
+        if (contents.hasAxis(AxisCalibration.C)) {
+            // Input: XYCZT, Output: XYCZT
+            return img;
+        } else if (contents.hasAxis(AxisCalibration.Z)) {
+            // Input: XYZCT, Output: XYCZT
+            return Views.moveAxis(img, 2, 3);
+        } else if (contents.hasAxis(AxisCalibration.T)) {
+            // Input: XYTZC, Output: XYCZT
+            img = Views.moveAxis(img, 2, 4);
+            return Views.moveAxis(img, 2, 3);
+        } else {
+            throw new IllegalArgumentException("Unexpected axes " + Arrays.toString(contents.axesPerLevel[0]));
+        }
+    }
+
+    private static <T> RandomAccessibleInterval<T> ensureDims(RandomAccessibleInterval<T> img, int nDims) {
+        while (img.numDimensions() < nDims) {
+            img = Views.addDimension(img, 0, 0);
+        }
+        return img;
+    }
+
+    /**
+     * Check that the axis ordering matches our expectations of XYZCT (based upon the documentation).
+     * Some axis may be missing, but based on the docs we don't expect the order can change.
+     * Confirming this now means we don't need to write defensive code to handle weirdness later.
+     * @param contents
+     */
+    private static void checkXYAxisOrThrow(PyramidContents<?> contents) {
+        int lastInd = -1;
+        List<String> expectedOrder = List.of(AxisCalibration.X, AxisCalibration.Y, AxisCalibration.Z, AxisCalibration.C, AxisCalibration.T);
+        for (var name : expectedOrder) {
+            if (contents.hasAxis(name)) {
+                int ind = contents.axisIndex(name);
+                if (ind < lastInd) {
+                    throw new IllegalArgumentException("Unexpected axis order, expected XYZCT but got " + Arrays.toString(contents.axesPerLevel[0]));
+                } else {
+                    lastInd = ind;
+                }
+            } else if (name.equals(AxisCalibration.X) || name.equals(AxisCalibration.Y)) {
+                throw new IllegalArgumentException("Missing X or Y axis");
+            }
+        }
+    }
+
     private static PixelCalibration parsePixelCalibration(AxisCalibration[] axes) {
+        if (axes.length < 2)
+            throw new IllegalArgumentException("At least 2 axes are required for an image, got " + Arrays.toString(axes));
         if (!Objects.equals(AxisCalibration.X, axes[0].name))
             throw new IllegalArgumentException("Expected first axis to be " + AxisCalibration.X + ", found " + axes[0].name);
         if (!Objects.equals(AxisCalibration.Y, axes[1].name))
-            throw new IllegalArgumentException("Expected first axis to be " + AxisCalibration.Y + ", found " + axes[1].name);
-        // Original expected order is XYZCT *before* we convert for QuPath
+            throw new IllegalArgumentException("Expected second axis to be " + AxisCalibration.Y + ", found " + axes[1].name);
+        // Original expected order is XYZCT *before* we convert for QuPath - but z may not be present
         var builder = new PixelCalibration.Builder();
         if (isMicrons(axes[0].unit) && isMicrons(axes[1].unit)) {
             builder = builder.pixelSizeMicrons(axes[0].scale, axes[1].scale);
         }
-        if (axes.length > 3) {
-            if (!Objects.equals(AxisCalibration.Z, axes[2].name))
-                throw new IllegalArgumentException("Expected first axis to be " + AxisCalibration.Z + ", found " + axes[2].name);
-            if (isMicrons(axes[2].unit)) {
-                builder = builder.zSpacingMicrons(axes[2].scale);
-            }
+        if (axes.length >= 3 && Objects.equals(AxisCalibration.Z, axes[2].name) && isMicrons(axes[2].unit)) {
+            builder = builder.zSpacingMicrons(axes[2].scale);
         }
         return builder.build();
     }

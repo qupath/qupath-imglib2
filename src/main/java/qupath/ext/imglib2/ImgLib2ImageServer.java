@@ -21,6 +21,7 @@ import qupath.lib.color.ColorModelFactory;
 import qupath.lib.common.LogTools;
 import qupath.lib.images.servers.AbstractTileableImageServer;
 import qupath.lib.images.servers.ImageChannel;
+import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.ImageServerBuilder;
 import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.PixelCalibration;
@@ -64,9 +65,11 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
     private final List<? extends RandomAccessibleInterval<T>> accessibles;
     private final ImageServerMetadata metadata;
     private final int numberOfChannelsInAccessibles;
+    private final String persistentId;
 
-    private ImgLib2ImageServer(List<? extends RandomAccessibleInterval<T>> accessibles, PixelType pixelType, ImageServerMetadata metadata) {
+    private ImgLib2ImageServer(List<? extends RandomAccessibleInterval<T>> accessibles, PixelType pixelType, ImageServerMetadata metadata, String persistentId) {
         this.accessibles = accessibles;
+        this.persistentId = persistentId;
 
         RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
         T value = firstAccessible.firstElement();
@@ -133,6 +136,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                     case FLOAT64 -> createFloat64DataBuffer(tile, new double[numberOfChannelsInAccessibles][xyPlaneSize]);
             };
 
+
             return new BufferedImage(
                     ColorModelFactory.createColorModel(metadata.getPixelType(), metadata.getChannels()),
                     WritableRaster.createWritableRaster(
@@ -158,7 +162,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
 
     @Override
     protected String createID() {
-        return String.valueOf(counter.incrementAndGet());
+        return persistentId == null ? "imglib2-" + counter.incrementAndGet() : persistentId;
     }
 
     @Override
@@ -192,6 +196,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         private final List<? extends RandomAccessibleInterval<T>> accessibles;
         private final PixelType pixelType;
         private ImageServerMetadata metadata;
+        private String persistentId;
 
         private Builder(List<? extends RandomAccessibleInterval<T>> accessibles) {
             checkAccessibles(accessibles);
@@ -254,6 +259,23 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
             checkChannels(accessibles, channels);
 
             this.metadata = new ImageServerMetadata.Builder(metadata).channels(channels).build();
+            return this;
+        }
+
+        /**
+         * Optionally specify a persistent ID to return with {@link ImageServer#getPath()}.
+         * This is used for tile caching, so must be unique.
+         * <p>
+         * If it is not specified, a unique ID will be generated for the current QuPath session.
+         * <p>
+         * A typical use is to provide an ID that incorporates the builder type and the URI of
+         * an image, so that cached tiles can be reused if the same image is reopened during a QuPath session.
+         * Not setting the ID would mean that the reopened image caches its tiles with an entirely separate ID.
+         * @param id the unique server ID
+         * @return this builder
+         */
+        public Builder<T> persistentId(String id) {
+            this.persistentId = id;
             return this;
         }
 
@@ -328,7 +350,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
          * @return a new {@link ImgLib2ImageServer} whose parameters are determined from this builder
          */
         public ImgLib2ImageServer<T> build() {
-            return new ImgLib2ImageServer<>(accessibles, pixelType, metadata);
+            return new ImgLib2ImageServer<>(accessibles, pixelType, metadata, persistentId);
         }
 
         private static <T extends NativeType<T> & NumericType<T>> void checkAccessibles(List<? extends RandomAccessibleInterval<T>> accessibles) {
