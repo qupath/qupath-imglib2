@@ -75,6 +75,7 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
         }
         return builder
                 .pixelCalibration(cal)
+                .uris(uri)
                 .build();
     }
 

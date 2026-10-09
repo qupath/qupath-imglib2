@@ -1,5 +1,6 @@
 package qupath.ext.imglib2;
 
+import java.util.stream.Collectors;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.blocks.PrimitiveBlocks;
@@ -66,10 +67,13 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
     private final ImageServerMetadata metadata;
     private final int numberOfChannelsInAccessibles;
     private final String persistentId;
+    private final List<URI> uris;
 
-    private ImgLib2ImageServer(List<? extends RandomAccessibleInterval<T>> accessibles, PixelType pixelType, ImageServerMetadata metadata, String persistentId) {
+    private ImgLib2ImageServer(List<? extends RandomAccessibleInterval<T>> accessibles, PixelType pixelType,
+                               ImageServerMetadata metadata, String persistentId, List<URI> uris) {
         this.accessibles = accessibles;
         this.persistentId = persistentId;
+        this.uris = uris == null ? List.of() : List.copyOf(uris);
 
         RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
         T value = firstAccessible.getType();
@@ -162,12 +166,16 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
 
     @Override
     protected String createID() {
-        return persistentId == null ? "imglib2-" + counter.incrementAndGet() : persistentId;
+        if (persistentId != null)
+            return persistentId;
+        if (uris.isEmpty())
+            return "imglib2-" + counter.incrementAndGet();
+        return "imglib2-[" + uris.stream().map(URI::toString).collect(Collectors.joining(", ")) + "]";
     }
 
     @Override
     public Collection<URI> getURIs() {
-        return List.of();
+        return uris;
     }
 
     @Override
@@ -197,6 +205,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         private final PixelType pixelType;
         private ImageServerMetadata metadata;
         private String persistentId;
+        private List<URI> uris;
 
         private Builder(List<? extends RandomAccessibleInterval<T>> accessibles) {
             checkAccessibles(accessibles);
@@ -266,7 +275,8 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
          * Optionally specify a persistent ID to return with {@link ImageServer#getPath()}.
          * This is used for tile caching, so must be unique.
          * <p>
-         * If it is not specified, a unique ID will be generated for the current QuPath session.
+         * If it is not specified, an ID will be generated based on any provided URIs,
+         * or if there are no URIs then a unique ID will be generated for the current QuPath session.
          * <p>
          * A typical use is to provide an ID that incorporates the builder type and the URI of
          * an image, so that cached tiles can be reused if the same image is reopened during a QuPath session.
@@ -277,6 +287,27 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         public Builder<T> persistentId(String id) {
             this.persistentId = id;
             return this;
+        }
+
+        /**
+         * Optional list of URIs, which will be returned by {@link ImageServer#getURIs()}.
+         * If provided, and {@link #persistentId} is not set, an ID will be generated based on these URIs.
+         * @param uris a collection of URIs
+         * @return this builder
+         */
+        public Builder<T> uris(Collection<? extends URI> uris) {
+            this.uris = List.copyOf(uris);
+            return this;
+        }
+
+        /**
+         * Optional array of URIs, which will be returned by {@link ImageServer#getURIs()}.
+         * If provided, and {@link #persistentId} is not set, an ID will be generated based on these URIs.
+         * @param uris a collection of URIs
+         * @return this builder
+         */
+        public Builder<T> uris(URI... uris) {
+            return uris(List.of(uris));
         }
 
         /**
@@ -350,7 +381,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
          * @return a new {@link ImgLib2ImageServer} whose parameters are determined from this builder
          */
         public ImgLib2ImageServer<T> build() {
-            return new ImgLib2ImageServer<>(accessibles, pixelType, metadata, persistentId);
+            return new ImgLib2ImageServer<>(accessibles, pixelType, metadata, persistentId, uris);
         }
 
         private static <T extends NativeType<T> & NumericType<T>> void checkAccessibles(List<? extends RandomAccessibleInterval<T>> accessibles) {
