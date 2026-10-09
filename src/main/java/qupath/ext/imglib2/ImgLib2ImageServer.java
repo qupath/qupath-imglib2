@@ -5,6 +5,7 @@ import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.blocks.PrimitiveBlocks;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.ByteType;
@@ -224,6 +225,8 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 case IntType ignored -> PixelType.INT32;
                 case FloatType ignored -> PixelType.FLOAT32;
                 case DoubleType ignored -> PixelType.FLOAT64;
+                // BitType can throw a NPE in its toString() method
+                case BitType ignored -> throw new IllegalArgumentException("Unexpected accessible type BitType");
                 default -> throw new IllegalArgumentException(String.format("Unexpected accessible type %s", value));
             };
             this.metadata = new ImageServerMetadata.Builder()
