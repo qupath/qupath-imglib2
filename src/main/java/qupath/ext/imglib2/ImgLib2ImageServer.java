@@ -72,7 +72,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
         this.persistentId = persistentId;
 
         RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
-        T value = firstAccessible.firstElement();
+        T value = firstAccessible.getType();
         this.metadata = new ImageServerMetadata.Builder(metadata)
                 .width((int) firstAccessible.dimension(ImgBuilder.AXIS_X))
                 .height((int) firstAccessible.dimension(ImgBuilder.AXIS_Y))
@@ -202,7 +202,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
             checkAccessibles(accessibles);
 
             RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
-            T value = firstAccessible.firstElement();
+            T value = firstAccessible.getType();
 
             this.accessibles = accessibles;
             this.pixelType = switch (value) {
@@ -410,7 +410,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
             }
 
             RandomAccessibleInterval<T> firstAccessible = accessibles.getFirst();
-            if (firstAccessible.firstElement() instanceof ARGBType && firstAccessible.dimension(ImgBuilder.AXIS_CHANNEL) != 1) {
+            if (firstAccessible.getType() instanceof ARGBType && firstAccessible.dimension(ImgBuilder.AXIS_CHANNEL) != 1) {
                 throw new IllegalArgumentException(String.format(
                         "The provided accessibles %s have the ARGB type, but not one channel (found %d)",
                         accessibles,
@@ -427,7 +427,7 @@ public class ImgLib2ImageServer<T extends NativeType<T> & NumericType<T>> extend
                 Objects.requireNonNull(channel);
             }
 
-            if (accessibles.getFirst().firstElement() instanceof ARGBType) {
+            if (accessibles.getFirst().getType() instanceof ARGBType) {
                 if (!channels.equals(ImageChannel.getDefaultRGBChannels())) {
                     throw new IllegalArgumentException(String.format(
                             "The current accessibles %s have the ARGB type, but the provided channels %s are not the default RGB channels %s",
