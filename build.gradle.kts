@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.qupath"
-version = "0.2.0"
+version = "0.2.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -36,7 +36,7 @@ dependencies {
     implementation(qupath.slf4j)
 
     // Cache - can later use QuPath catalog (added in v0.7.0)
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
+    implementation(qupath.caffeine)
 
     // Unit tests
     testImplementation(qupath.junit)
