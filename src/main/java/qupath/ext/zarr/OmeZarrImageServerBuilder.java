@@ -34,6 +34,11 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
 
     private static final Logger logger = LoggerFactory.getLogger(OmeZarrImageServerBuilder.class);
 
+    /**
+     * Default constructor.
+     */
+    public OmeZarrImageServerBuilder() {}
+
     @Override
     public UriImageSupport<BufferedImage> checkImageSupport(URI uri, String... args) throws IOException {
         float supportLevel = 0f;
@@ -161,6 +166,13 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
         }
     }
 
+    /**
+     * Attempt to create a PixelCalibration from axes.
+     * Note that this currently <i>only</i> supports µm.
+     * TODO: Update this to use units specified in the spec at https://ngff.openmicroscopy.org/0.5/#axes-md
+     * @param axes
+     * @return
+     */
     private static PixelCalibration parsePixelCalibration(AxisCalibration[] axes) {
         if (axes.length < 2)
             throw new IllegalArgumentException("At least 2 axes are required for an image, got " + Arrays.toString(axes));
