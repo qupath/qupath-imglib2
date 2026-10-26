@@ -11,7 +11,7 @@ rootProject.name = "qupath-imglib2"
 
 // Used for version catalogs (including Java compatibility)
 val qupathVersion = "0.7.0"
-val sciJavaVersion = "44.0.0"
+val sciJavaVersion = "45.1.0"
 
 dependencyResolutionManagement {
 

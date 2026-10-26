@@ -8,4 +8,5 @@ module qupath.imglib {
     requires java.desktop;
     requires net.imglib2.realtransform;
     requires org.slf4j;
+    requires ome.zarr;
 }
