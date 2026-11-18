@@ -7,9 +7,9 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import ome.zarr.imglib2.PyramidBackend;
 import ome.zarr.imglib2.PyramidContents;
-import ome.zarr.imglib2.ZarrUtils;
 import ome.zarr.imglib2.metadata.AxisCalibration;
 import ome.zarr.imglib2.metadata.Omero;
+import ome.zarr.imglib2.util.ZarrUtils;
 import ome.zarr.zarrjava.ZarrJavaPyramidBackend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
         PyramidBackend backend = new ZarrJavaPyramidBackend();
         PyramidContents<T> contents = backend.read(uri);
         List<RandomAccessibleInterval<T>> resolutions = new ArrayList<>();
-        AxisCalibration[] axes = contents.axesPerLevel[0];
+        List<AxisCalibration> axes = contents.axes(0);
         PixelCalibration cal = parsePixelCalibration(axes);
         for (int r = 0; r < contents.numResolutionLevels(); r++) {
             RandomAccessibleInterval<T> img = standardizeAxes(contents.asImg(r), contents);
@@ -71,7 +71,7 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
         var builder = ImgLib2ImageServer.builder(resolutions)
                 .persistentId(getClass().getSimpleName() + "-" + uri + argsString);
 
-        var channels = parseChannels(contents.omero);
+        var channels = parseChannels(contents.omero());
         long expectedChannels = resolutions.getFirst().dimension(ImgBuilder.AXIS_CHANNEL);
         if (channels.size() == expectedChannels) {
             builder = builder.channels(channels);
@@ -113,7 +113,7 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
             // Input: XYZCT, Output: XYCZT
             return Views.moveAxis(img, 2, 3);
         } else {
-            throw new IllegalArgumentException("Unexpected axes " + Arrays.toString(contents.axesPerLevel[0]));
+            throw new IllegalArgumentException("Unexpected axes " + contents.axes(0));
         }
     }
 
@@ -132,7 +132,7 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
             img = Views.moveAxis(img, 2, 4);
             return Views.moveAxis(img, 2, 3);
         } else {
-            throw new IllegalArgumentException("Unexpected axes " + Arrays.toString(contents.axesPerLevel[0]));
+            throw new IllegalArgumentException("Unexpected axes " + contents.axes(0));
         }
     }
 
@@ -156,7 +156,7 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
             if (contents.hasAxis(name)) {
                 int ind = contents.axisIndex(name);
                 if (ind < lastInd) {
-                    throw new IllegalArgumentException("Unexpected axis order, expected XYZCT but got " + Arrays.toString(contents.axesPerLevel[0]));
+                    throw new IllegalArgumentException("Unexpected axis order, expected XYZCT but got " + contents.axes(0));
                 } else {
                     lastInd = ind;
                 }
@@ -173,20 +173,20 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
      * @param axes
      * @return
      */
-    private static PixelCalibration parsePixelCalibration(AxisCalibration[] axes) {
-        if (axes.length < 2)
-            throw new IllegalArgumentException("At least 2 axes are required for an image, got " + Arrays.toString(axes));
-        if (!Objects.equals(AxisCalibration.X, axes[0].name))
-            throw new IllegalArgumentException("Expected first axis to be " + AxisCalibration.X + ", found " + axes[0].name);
-        if (!Objects.equals(AxisCalibration.Y, axes[1].name))
-            throw new IllegalArgumentException("Expected second axis to be " + AxisCalibration.Y + ", found " + axes[1].name);
+    private static PixelCalibration parsePixelCalibration(List<AxisCalibration> axes) {
+        if (axes.size() < 2)
+            throw new IllegalArgumentException("At least 2 axes are required for an image, got " + axes);
+        if (!Objects.equals(AxisCalibration.X, axes.getFirst().name))
+            throw new IllegalArgumentException("Expected first axis to be " + AxisCalibration.X + ", found " + axes.getFirst().name);
+        if (!Objects.equals(AxisCalibration.Y, axes.get(1).name))
+            throw new IllegalArgumentException("Expected second axis to be " + AxisCalibration.Y + ", found " + axes.get(1).name);
         // Original expected order is XYZCT *before* we convert for QuPath - but z may not be present
         var builder = new PixelCalibration.Builder();
-        if (isMicrons(axes[0].unit) && isMicrons(axes[1].unit)) {
-            builder = builder.pixelSizeMicrons(axes[0].scale, axes[1].scale);
+        if (isMicrons(axes.getFirst().unit) && isMicrons(axes.get(1).unit)) {
+            builder = builder.pixelSizeMicrons(axes.getFirst().scale, axes.get(1).scale);
         }
-        if (axes.length >= 3 && Objects.equals(AxisCalibration.Z, axes[2].name) && isMicrons(axes[2].unit)) {
-            builder = builder.zSpacingMicrons(axes[2].scale);
+        if (axes.size() >= 3 && Objects.equals(AxisCalibration.Z, axes.get(2).name) && isMicrons(axes.get(2).unit)) {
+            builder = builder.zSpacingMicrons(axes.get(2).scale);
         }
         return builder.build();
     }
@@ -203,10 +203,11 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
 
     private static List<ImageChannel> parseChannels(Omero omero) {
         List<ImageChannel> channels = new ArrayList<>();
-        for (int c = 0; c < omero.channels.size(); c++) {
-            var channel = omero.channels.get(c);
-            String name = channel.label;
-            Integer color = parseColor(channel.color).orElse(ImageChannel.getDefaultChannelColor(c));
+        var omeroChannels = omero.channels();
+        for (int c = 0; c < omeroChannels.size(); c++) {
+            var channel = omeroChannels.get(c);
+            String name = channel.label();
+            Integer color = parseColor(channel.color()).orElse(ImageChannel.getDefaultChannelColor(c));
             channels.add(ImageChannel.getInstance(name, color));
         }
         return channels;
