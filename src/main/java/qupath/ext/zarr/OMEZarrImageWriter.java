@@ -22,6 +22,11 @@ public class OMEZarrImageWriter implements ImageWriter<BufferedImage> {
 
     private static final Logger logger = LoggerFactory.getLogger(OMEZarrImageWriter.class);
 
+    /**
+     * Default no-args constructor.
+     */
+    public OMEZarrImageWriter() {}
+
     @Override
     public String getName() {
         return "OME-Zarr";

@@ -214,6 +214,7 @@ public class ImgBuilder<T extends NumericType<T>> {
      * Note that for an RGB image, this will give 3 channels with {@link UnsignedByteType}, rather than using {@link ARGBType}.
      *
      * @param server the input image
+     * @param type the pixel type
      * @param <T> the Img type
      * @return a builder to create an instance of this class
      * @throws IllegalArgumentException if the provided type is not compatible with the input image (see above), or if
