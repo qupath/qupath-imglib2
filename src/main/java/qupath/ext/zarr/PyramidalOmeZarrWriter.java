@@ -53,19 +53,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <a href="https://ngff.openmicroscopy.org/0.4/index.html">Next-generation file formats (NGFF)</a>.
  * The transitional "bioformats2raw.layout" and "omero" metadata are also considered.
  * <p>
- * Contrary to {@link OMEZarrWriter}, this class will first write the full resolution level. Then, the second level is
+ * Contrary to {@link OmeZarrWriter}, this class will first write the full resolution level. Then, the second level is
  * written by looking at the first level pixels that were just written (so the input image is not considered anymore).
  * Then, the third level is written by looking at the second level pixels that were just written, and so on until all
- * levels are written. This provides less flexibility than {@link OMEZarrWriter} but is less likely to throw out of
+ * levels are written. This provides less flexibility than {@link OmeZarrWriter} but is less likely to throw out of
  * memory errors.
  * <p>
  * Use a {@link Builder} to create an instance of this class.
  * <p>
  * This class is not thread-safe but already uses concurrency internally to write tiles.
  */
-public class PyramidalOMEZarrWriter {
+public class PyramidalOmeZarrWriter {
 
-    private static final Logger logger = LoggerFactory.getLogger(PyramidalOMEZarrWriter.class);
+    private static final Logger logger = LoggerFactory.getLogger(PyramidalOmeZarrWriter.class);
     private final ImageServer<BufferedImage> server;
     private final double firstDownsampleOnInputImage;
     private final List<Double> downsamplesOutputImage;
@@ -77,7 +77,7 @@ public class PyramidalOMEZarrWriter {
     private final ProgressMonitor onProgress;
     private final Group root;
 
-    private PyramidalOMEZarrWriter(Builder builder, Path path) throws IOException, ZarrException {
+    private PyramidalOmeZarrWriter(Builder builder, Path path) throws IOException, ZarrException {
         TransformedServerBuilder transformedServerBuilder = new TransformedServerBuilder(builder.server);
         if (builder.zStart != 0 || builder.zEnd != builder.server.nZSlices() || builder.tStart != 0 || builder.tEnd != builder.server.nTimepoints()) {
             transformedServerBuilder.slice(
@@ -134,7 +134,7 @@ public class PyramidalOMEZarrWriter {
                     root.storeHandle,
                     tileWidth,
                     tileHeight,
-                    new OMEZarrAttributesCreator(metadata).getLevelAttributes(),
+                    new OmeZarrAttributesCreator(metadata).getLevelAttributes(),
                     builder.codecs
             );
         } catch (ZarrException e) {
@@ -145,7 +145,7 @@ public class PyramidalOMEZarrWriter {
     }
 
     /**
-     * Write the image level by level as described in {@link PyramidalOMEZarrWriter}. This function will block
+     * Write the image level by level as described in {@link PyramidalOmeZarrWriter}. This function will block
      * until all levels are written.
      *
      * @throws Exception if a reading or writing error occurs or if this function is interrupted
@@ -158,7 +158,7 @@ public class PyramidalOMEZarrWriter {
 
         try {
             int numberOfDownsamples = downsamplesOutputImage.size();
-            var attributes = new OMEZarrAttributesCreator(new ImageServerMetadata.Builder(server.getMetadata())
+            var attributes = new OmeZarrAttributesCreator(new ImageServerMetadata.Builder(server.getMetadata())
                     .levelsFromDownsamples(firstDownsampleOnInputImage)
                     .pixelCalibration(server.getMetadata().getPixelCalibration().createScaledInstance(firstDownsampleOnInputImage, firstDownsampleOnInputImage))
                     .build()
@@ -194,7 +194,7 @@ public class PyramidalOMEZarrWriter {
                     );
                 }
 
-                var levelAttrs = new OMEZarrAttributesCreator(new ImageServerMetadata.Builder(server.getMetadata())
+                var levelAttrs = new OmeZarrAttributesCreator(new ImageServerMetadata.Builder(server.getMetadata())
                         .levelsFromDownsamples(downsamplesOutputImage.stream().limit(i+1).mapToDouble(d -> d).toArray())
                         .pixelCalibration(server.getMetadata().getPixelCalibration().createScaledInstance(downsamplesOutputImage.get(i), downsamplesOutputImage.get(i)))
                         .build()
@@ -208,7 +208,7 @@ public class PyramidalOMEZarrWriter {
     }
 
     /**
-     * Builder to create an instance of a {@link PyramidalOMEZarrWriter}.
+     * Builder to create an instance of a {@link PyramidalOmeZarrWriter}.
      */
     public static class Builder {
 
@@ -284,7 +284,7 @@ public class PyramidalOMEZarrWriter {
             if (downsampleList.isEmpty()) {
                 throw new IllegalArgumentException("At least one downsample should be provided");
             }
-            OMEZarrWriter.checkDownsamples(downsamples);
+            OmeZarrWriter.checkDownsamples(downsamples);
             this.downsamples = downsampleList.stream().distinct().sorted().toList();
             return this;
         }
@@ -428,10 +428,10 @@ public class PyramidalOMEZarrWriter {
         }
 
         /**
-         * Create a new instance of {@link PyramidalOMEZarrWriter}. This will also create an empty image on the provided path.
+         * Create a new instance of {@link PyramidalOmeZarrWriter}. This will also create an empty image on the provided path.
          *
          * @param path the path where to write the image. It must end with ".ome.zarr" and shouldn't already exist
-         * @return the new {@link PyramidalOMEZarrWriter}
+         * @return the new {@link PyramidalOmeZarrWriter}
          * @throws java.nio.file.InvalidPathException if a path object cannot be created from the provided path
          * @throws IOException if the empty image cannot be created. This can happen if the provided path is incorrect
          * or if the user doesn't have enough permissions
@@ -439,7 +439,7 @@ public class PyramidalOMEZarrWriter {
          * exists at this location
          * @throws ZarrException if a codec has not been specified and the default codec fails to build
          */
-        public PyramidalOMEZarrWriter build(String path) throws IOException, ZarrException {
+        public PyramidalOmeZarrWriter build(String path) throws IOException, ZarrException {
             Path outputPath = Paths.get(path);
 
             if (codecs.isEmpty()) {
@@ -453,7 +453,7 @@ public class PyramidalOMEZarrWriter {
                 throw new IllegalArgumentException(String.format("The provided path (%s) already exists", path));
             }
 
-            return new PyramidalOMEZarrWriter(this, outputPath);
+            return new PyramidalOmeZarrWriter(this, outputPath);
         }
     }
 

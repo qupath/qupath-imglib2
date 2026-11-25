@@ -3,7 +3,6 @@ package qupath.ext.zarr;
 import com.scalableminds.bloscjava.Blosc;
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Attributes;
-import dev.zarr.zarrjava.core.codec.ArrayBytesCodec;
 import dev.zarr.zarrjava.store.StoreHandle;
 import dev.zarr.zarrjava.v3.Array;
 import dev.zarr.zarrjava.v3.DataType;
@@ -11,9 +10,7 @@ import dev.zarr.zarrjava.v3.Group;
 import dev.zarr.zarrjava.v3.codec.Codec;
 import dev.zarr.zarrjava.v3.codec.core.BloscCodec;
 import dev.zarr.zarrjava.v3.codec.core.BytesCodec;
-import dev.zarr.zarrjava.v3.codec.core.JpegCodec;
 import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -101,7 +98,7 @@ class ZarrWriterUtils {
         group.createGroup(OME_FOLDER_NAME);
 
         try (OutputStream outputStream = new FileOutputStream(Files.createFile(path.resolve(OME_FOLDER_NAME).resolve(OME_METADATA_FILE_NAME)).toString())) {
-            outputStream.write(OMEXMLCreator.create(metadata));
+            outputStream.write(OmeXmlCreator.create(metadata));
         }
     }
 

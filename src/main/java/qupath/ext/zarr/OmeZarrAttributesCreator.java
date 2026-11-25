@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
  * Create attributes of a OME-Zarr file as described by version 0.4 of the specifications of the
  * <a href="https://ngff.openmicroscopy.org/0.4/index.html">Next-generation file formats (NGFF)</a>.
  */
-class OMEZarrAttributesCreator {
+class OmeZarrAttributesCreator {
 
     private static final String VERSION = "0.5";
     private final ImageServerMetadata metadata;
@@ -32,7 +32,7 @@ class OMEZarrAttributesCreator {
      *
      * @param metadata  the metadata of the image
      */
-    public OMEZarrAttributesCreator(ImageServerMetadata metadata) {
+    public OmeZarrAttributesCreator(ImageServerMetadata metadata) {
         this.metadata = metadata;
     }
 

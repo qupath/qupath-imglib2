@@ -36,7 +36,7 @@ import java.nio.charset.StandardCharsets;
  * Create the content of an OME XML file as described by the
  * <a href="http://www.openmicroscopy.org/Schemas/OME/2016-06/">Open Microscopy Environment OME Schema</a>.
  */
-class OMEXMLCreator {
+class OmeXmlCreator {
 
     private static final String NAMESPACE_ATTRIBUTE = "xmlns";
     private static final String NAMESPACE = "http://www.openmicroscopy.org/Schemas/OME/2016-06";
@@ -45,7 +45,7 @@ class OMEXMLCreator {
     private static final String OBJECTIVE_ID = "Objective:0";
     private static final String PIXELS_ID = "Pixels:0";
 
-    private OMEXMLCreator() {
+    private OmeXmlCreator() {
         throw new AssertionError("This class is not instantiable.");
     }
 

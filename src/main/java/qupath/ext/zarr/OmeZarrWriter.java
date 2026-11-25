@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.common.ThreadTools;
 import qupath.lib.images.servers.ImageServer;
-import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.ImageServers;
 import qupath.lib.images.servers.TileRequest;
 import qupath.lib.images.servers.TileRequestManager;
@@ -43,17 +42,17 @@ import java.util.function.Consumer;
  * <p>
  * This class is not thread-safe but uses concurrency internally to write tiles.
  * <p>
- * See {@link PyramidalOMEZarrWriter} for a more memory friendly Zarr writer.
+ * See {@link PyramidalOmeZarrWriter} for a more memory friendly Zarr writer.
  */
-public class OMEZarrWriter {
+public class OmeZarrWriter {
 
-    private static final Logger logger = LoggerFactory.getLogger(OMEZarrWriter.class);
+    private static final Logger logger = LoggerFactory.getLogger(OmeZarrWriter.class);
     private final ImageServer<BufferedImage> server;
     private final int numberOfThreads;
     private final Map<Integer, Array> levels;
     private final Consumer<TileRequest> onTileWritten;
 
-    private OMEZarrWriter(Builder builder, Path path) throws IOException {
+    private OmeZarrWriter(Builder builder, Path path) throws IOException {
         int tileWidth = ZarrWriterUtils.getChunkSize(
                 builder.tileWidth > 0 ? builder.tileWidth : builder.server.getMetadata().getPreferredTileWidth(),
                 builder.maxNumberOfChunks,
@@ -88,7 +87,7 @@ public class OMEZarrWriter {
         this.numberOfThreads = builder.numberOfThreads;
         var metadata = server.getMetadata();
 
-        OMEZarrAttributesCreator attributes = new OMEZarrAttributesCreator(metadata);
+        OmeZarrAttributesCreator attributes = new OmeZarrAttributesCreator(metadata);
 
         var rootStore = new FilesystemStore(path).resolve();
 
@@ -204,7 +203,7 @@ public class OMEZarrWriter {
     }
 
     /**
-     * Builder to create an instance of a {@link OMEZarrWriter}.
+     * Builder to create an instance of a {@link OmeZarrWriter}.
      */
     public static class Builder {
 
@@ -398,10 +397,10 @@ public class OMEZarrWriter {
         }
 
         /**
-         * Create a new instance of {@link OMEZarrWriter}. This will also create an empty image on the provided path.
+         * Create a new instance of {@link OmeZarrWriter}. This will also create an empty image on the provided path.
          *
          * @param path the path where to write the image. It must end with ".ome.zarr" and shouldn't already exist
-         * @return the new {@link OMEZarrWriter}
+         * @return the new {@link OmeZarrWriter}
          * @throws java.nio.file.InvalidPathException if a path object cannot be created from the provided path
          * @throws IOException if the empty image cannot be created. This can happen if the provided path is incorrect
          * or if the user doesn't have enough permissions
@@ -409,7 +408,7 @@ public class OMEZarrWriter {
          * @throws ZarrException if no codec has been specified and the default codec fails to build
          * exists at this location
          */
-        public OMEZarrWriter build(String path) throws IOException, ZarrException {
+        public OmeZarrWriter build(String path) throws IOException, ZarrException {
             Path outputPath = Paths.get(path);
             if (codecs.isEmpty()) {
                 codecs.addAll(ZarrWriterUtils.getDefaultCodecs());
@@ -422,7 +421,7 @@ public class OMEZarrWriter {
                 throw new IllegalArgumentException(String.format("The provided path (%s) already exists", path));
             }
 
-            return new OMEZarrWriter(this, outputPath);
+            return new OmeZarrWriter(this, outputPath);
         }
     }
 

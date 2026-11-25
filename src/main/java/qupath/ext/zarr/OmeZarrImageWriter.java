@@ -15,17 +15,17 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * An {@link ImageWriter} for writing OME-zarr files. Use an {@link OMEZarrWriter} if
+ * An {@link ImageWriter} for writing OME-zarr files. Use an {@link OmeZarrWriter} if
  * you need greater control.
  */
-public class OMEZarrImageWriter implements ImageWriter<BufferedImage> {
+public class OmeZarrImageWriter implements ImageWriter<BufferedImage> {
 
-    private static final Logger logger = LoggerFactory.getLogger(OMEZarrImageWriter.class);
+    private static final Logger logger = LoggerFactory.getLogger(OmeZarrImageWriter.class);
 
     /**
      * Default no-args constructor.
      */
-    public OMEZarrImageWriter() {}
+    public OmeZarrImageWriter() {}
 
     @Override
     public String getName() {
@@ -80,7 +80,7 @@ public class OMEZarrImageWriter implements ImageWriter<BufferedImage> {
     @Override
     public void writeImage(ImageServer<BufferedImage> server, RegionRequest region, String pathOutput) throws IOException {
         try {
-            new OMEZarrWriter.Builder(server)
+            new OmeZarrWriter.Builder(server)
                     .region(region)
                     .build(pathOutput)
                     .writeImage();

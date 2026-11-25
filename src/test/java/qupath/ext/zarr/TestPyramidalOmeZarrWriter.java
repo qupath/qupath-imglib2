@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public class TestPyramidalOMEZarrWriter {
+public class TestPyramidalOmeZarrWriter {
 
     @Test
     void Check_Error_When_No_Downsample_Given() throws Exception {
@@ -40,7 +40,7 @@ public class TestPyramidalOMEZarrWriter {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples)
+                () -> new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples)
         );
 
         sampleImageServer.close();
@@ -53,7 +53,7 @@ public class TestPyramidalOMEZarrWriter {
 
         Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples)
+                () -> new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples)
         );
 
         sampleImageServer.close();
@@ -66,7 +66,7 @@ public class TestPyramidalOMEZarrWriter {
 
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples)
+                () -> new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples)
         );
     }
 
@@ -80,7 +80,7 @@ public class TestPyramidalOMEZarrWriter {
 
         Assertions.assertThrows(
                 Exception.class,
-                () -> new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath).writeImage()
+                () -> new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath).writeImage()
         );
 
         sampleImageServer.close();
@@ -97,7 +97,7 @@ public class TestPyramidalOMEZarrWriter {
 
         Assertions.assertThrows(
                 Exception.class,
-                () -> new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath).writeImage()
+                () -> new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath).writeImage()
         );
 
         sampleImageServer.close();
@@ -123,7 +123,7 @@ public class TestPyramidalOMEZarrWriter {
                 z,
                 t
         );
-        PyramidalOMEZarrWriter writer = new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath);
+        PyramidalOmeZarrWriter writer = new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath);
 
         writer.writeImage();
 
@@ -164,7 +164,7 @@ public class TestPyramidalOMEZarrWriter {
                 z,
                 t
         );
-        PyramidalOMEZarrWriter writer = new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath);
+        PyramidalOmeZarrWriter writer = new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath);
 
         writer.writeImage();
 
@@ -207,7 +207,7 @@ public class TestPyramidalOMEZarrWriter {
                 z,
                 t
         );
-        PyramidalOMEZarrWriter writer = new PyramidalOMEZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath);
+        PyramidalOmeZarrWriter writer = new PyramidalOmeZarrWriter.Builder(sampleImageServer).downsamples(downsamples).build(outputImagePath);
 
         writer.writeImage();
 
@@ -237,7 +237,7 @@ public class TestPyramidalOMEZarrWriter {
         double[] allowedDownsamples = new double[]{0.5, 1, 2, 4};
         double[] notAllowedDownsamples = new double[]{-1, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
         for (double downsample : allowedDownsamples) {
-            new PyramidalOMEZarrWriter.Builder(sampleImageServer)
+            new PyramidalOmeZarrWriter.Builder(sampleImageServer)
                     .downsamples(downsample)
                     .build(outputImagePath)
                     .writeImage();
@@ -245,7 +245,7 @@ public class TestPyramidalOMEZarrWriter {
         }
         for (double downsample : notAllowedDownsamples) {
             Assertions.assertThrows(IllegalArgumentException.class,
-                    () -> new PyramidalOMEZarrWriter.Builder(sampleImageServer)
+                    () -> new PyramidalOmeZarrWriter.Builder(sampleImageServer)
                             .downsamples(downsample)
                             .build(outputImagePath)
                             .writeImage()

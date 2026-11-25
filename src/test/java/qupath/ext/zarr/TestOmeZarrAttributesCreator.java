@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class TestOMEZarrAttributesCreator {
+public class TestOmeZarrAttributesCreator {
 
     private static final ImageServerMetadata sampleMetadata = new ImageServerMetadata.Builder()
             .width(23)
@@ -41,7 +41,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Group_Attribute_Has_Multiscales_Array() {
         String label = "multiscales";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonElement multiscalesElement = root.getAsJsonObject("ome").get(label);
@@ -52,7 +52,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Multiscale_Array_Has_Axes_Array() {
         String label = "axes";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -66,7 +66,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 0;
         String label = "unit";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -81,7 +81,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 0;
         String label = "name";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -96,7 +96,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 0;
         String label = "type";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -111,7 +111,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 1;
         String label = "name";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -126,7 +126,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 1;
         String label = "type";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -141,7 +141,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 2;
         String label = "unit";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -156,7 +156,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 2;
         String label = "name";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -171,7 +171,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 2;
         String label = "type";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -186,7 +186,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 3;
         String label = "unit";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -201,7 +201,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 3;
         String label = "name";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -216,7 +216,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 3;
         String label = "type";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -231,7 +231,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 4;
         String label = "unit";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -246,7 +246,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 4;
         String label = "name";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -261,7 +261,7 @@ public class TestOMEZarrAttributesCreator {
         int axeIndex = 4;
         String label = "type";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -274,7 +274,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Multiscale_Array_Has_Datasets_Array() {
         String label = "datasets";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -286,7 +286,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Multiscale_Array_Number_Of_Datasets() {
         int expectedNumberOfDatasets = sampleMetadata.nLevels();
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -300,7 +300,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "path";
         int level = 0;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -315,7 +315,7 @@ public class TestOMEZarrAttributesCreator {
         int level = 0;
         String expectedPath = "0";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -330,7 +330,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "coordinateTransformations";
         int level = 0;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -344,7 +344,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "type";
         int level = 0;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -360,7 +360,7 @@ public class TestOMEZarrAttributesCreator {
         int level = 0;
         String expectedType = "scale";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -376,7 +376,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "scale";
         int level = 0;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -393,7 +393,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 0;
         float expectedScale = 2;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -411,7 +411,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 1;
         float expectedScale = 1;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -429,7 +429,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 2;
         float expectedScale = sampleMetadata.getPixelCalibration().getZSpacing().floatValue();
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -447,7 +447,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 3;
         float expectedScale = sampleMetadata.getPixelCalibration().getPixelHeight().floatValue() * (float) sampleMetadata.getDownsampleForLevel(level);
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -465,7 +465,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 4;
         float expectedScale = sampleMetadata.getPixelCalibration().getPixelWidth().floatValue() * (float) sampleMetadata.getDownsampleForLevel(level);
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -481,7 +481,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "path";
         int level = 1;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -496,7 +496,7 @@ public class TestOMEZarrAttributesCreator {
         int level = 1;
         String expectedPath = "1";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -511,7 +511,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "coordinateTransformations";
         int level = 1;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -525,7 +525,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "type";
         int level = 1;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -541,7 +541,7 @@ public class TestOMEZarrAttributesCreator {
         int level = 1;
         String expectedType = "scale";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -557,7 +557,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "scale";
         int level = 1;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -574,7 +574,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 0;
         float expectedScale = 2;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -592,7 +592,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 1;
         float expectedScale = 1;
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -610,7 +610,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 2;
         float expectedScale = sampleMetadata.getPixelCalibration().getZSpacing().floatValue();
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -628,7 +628,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 3;
         float expectedScale = sampleMetadata.getPixelCalibration().getPixelHeight().floatValue() * (float) sampleMetadata.getDownsampleForLevel(level);
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -646,7 +646,7 @@ public class TestOMEZarrAttributesCreator {
         int scaleIndex = 4;
         float expectedScale = sampleMetadata.getPixelCalibration().getPixelWidth().floatValue() * (float) sampleMetadata.getDownsampleForLevel(level);
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -661,7 +661,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Multiscale_Array_Has_Name() {
         String label = "name";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -673,7 +673,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "name";
         String expectedName = sampleMetadata.getName();
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -685,7 +685,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Multiscale_Array_Has_Version() {
         String label = "version";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -697,7 +697,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "version";
         String expectedVersion = "0.5";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
@@ -709,7 +709,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Group_Attribute_Has_Omero_Object() {
         String label = "omero";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonElement omeroElement = root.getAsJsonObject("ome").get(label);
@@ -720,7 +720,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Omero_Object_Has_Name() {
         String label = "name";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
@@ -732,7 +732,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "name";
         String expectedName = sampleMetadata.getName();
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
@@ -744,7 +744,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Omero_Object_Has_Version() {
         String label = "version";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
@@ -756,7 +756,7 @@ public class TestOMEZarrAttributesCreator {
         String label = "version";
         String expectedVersion = "0.5";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
@@ -768,7 +768,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Omero_Object_Has_Channels_Array() {
         String label = "channels";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
@@ -781,7 +781,7 @@ public class TestOMEZarrAttributesCreator {
         int channelIndex = 2;
         String label = "label";
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
@@ -794,7 +794,7 @@ public class TestOMEZarrAttributesCreator {
         int channelIndex = 2;
         String expectedLabel = sampleMetadata.getChannel(channelIndex).getName();
 
-        Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
+        Map<String, Object> groupAttributes = new OmeZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
         JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
@@ -807,7 +807,7 @@ public class TestOMEZarrAttributesCreator {
     void Check_Level_Attributes_Has_Array_Dimensions() {
         String label = "_ARRAY_DIMENSIONS";
 
-        Map<String, Object> levelAttributes = new OMEZarrAttributesCreator(sampleMetadata).getLevelAttributes();
+        Map<String, Object> levelAttributes = new OmeZarrAttributesCreator(sampleMetadata).getLevelAttributes();
 
         JsonObject root = new Gson().toJsonTree(levelAttributes).getAsJsonObject();
         JsonElement arrayDimensionsElement = root.get(label);
@@ -820,7 +820,7 @@ public class TestOMEZarrAttributesCreator {
         int dimensionIndex = 0;
         String expectedDimension = "t";
 
-        Map<String, Object> levelAttributes = new OMEZarrAttributesCreator(sampleMetadata).getLevelAttributes();
+        Map<String, Object> levelAttributes = new OmeZarrAttributesCreator(sampleMetadata).getLevelAttributes();
 
         JsonObject root = new Gson().toJsonTree(levelAttributes).getAsJsonObject();
         JsonArray arrayDimensionsElement = root.get(label).getAsJsonArray();
@@ -834,7 +834,7 @@ public class TestOMEZarrAttributesCreator {
         int dimensionIndex = 1;
         String expectedDimension = "c";
 
-        Map<String, Object> levelAttributes = new OMEZarrAttributesCreator(sampleMetadata).getLevelAttributes();
+        Map<String, Object> levelAttributes = new OmeZarrAttributesCreator(sampleMetadata).getLevelAttributes();
 
         JsonObject root = new Gson().toJsonTree(levelAttributes).getAsJsonObject();
         JsonArray arrayDimensionsElement = root.get(label).getAsJsonArray();
@@ -848,7 +848,7 @@ public class TestOMEZarrAttributesCreator {
         int dimensionIndex = 2;
         String expectedDimension = "z";
 
-        Map<String, Object> levelAttributes = new OMEZarrAttributesCreator(sampleMetadata).getLevelAttributes();
+        Map<String, Object> levelAttributes = new OmeZarrAttributesCreator(sampleMetadata).getLevelAttributes();
 
         JsonObject root = new Gson().toJsonTree(levelAttributes).getAsJsonObject();
         JsonArray arrayDimensionsElement = root.get(label).getAsJsonArray();
@@ -862,7 +862,7 @@ public class TestOMEZarrAttributesCreator {
         int dimensionIndex = 3;
         String expectedDimension = "y";
 
-        Map<String, Object> levelAttributes = new OMEZarrAttributesCreator(sampleMetadata).getLevelAttributes();
+        Map<String, Object> levelAttributes = new OmeZarrAttributesCreator(sampleMetadata).getLevelAttributes();
 
         JsonObject root = new Gson().toJsonTree(levelAttributes).getAsJsonObject();
         JsonArray arrayDimensionsElement = root.get(label).getAsJsonArray();
@@ -876,7 +876,7 @@ public class TestOMEZarrAttributesCreator {
         int dimensionIndex = 4;
         String expectedDimension = "x";
 
-        Map<String, Object> levelAttributes = new OMEZarrAttributesCreator(sampleMetadata).getLevelAttributes();
+        Map<String, Object> levelAttributes = new OmeZarrAttributesCreator(sampleMetadata).getLevelAttributes();
 
         JsonObject root = new Gson().toJsonTree(levelAttributes).getAsJsonObject();
         JsonArray arrayDimensionsElement = root.get(label).getAsJsonArray();

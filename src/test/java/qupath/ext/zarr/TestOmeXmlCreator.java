@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class TestOMEXMLCreator {
+public class TestOmeXmlCreator {
 
     private static final ImageServerMetadata sampleMetadata = new ImageServerMetadata.Builder()
             .width(23)
@@ -46,7 +46,7 @@ public class TestOMEXMLCreator {
     void Check_Namespace() throws ParserConfigurationException, IOException, SAXException, TransformerException {
         String expectedNamespace = "http://www.openmicroscopy.org/Schemas/OME/2016-06";
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Assertions.assertEquals(
                 expectedNamespace,
@@ -56,7 +56,7 @@ public class TestOMEXMLCreator {
 
     @Test
     void Check_Instrument_Element_Exists() throws IOException, ParserConfigurationException, SAXException, TransformerException {
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Assertions.assertEquals(
                 1,
@@ -66,7 +66,7 @@ public class TestOMEXMLCreator {
 
     @Test
     void Check_Objective_Element_Exists() throws IOException, ParserConfigurationException, SAXException, TransformerException {
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element instrumentElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Instrument").item(0);
         Assertions.assertEquals(
@@ -79,7 +79,7 @@ public class TestOMEXMLCreator {
     void Check_Magnification() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedMagnification = String.valueOf(sampleMetadata.getMagnification());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element instrumentElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Instrument").item(0);
         Element objectiveElement = (Element) instrumentElement.getElementsByTagName("Objective").item(0);
@@ -88,7 +88,7 @@ public class TestOMEXMLCreator {
 
     @Test
     void Check_Image_Element_Exists() throws IOException, ParserConfigurationException, SAXException, TransformerException {
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Assertions.assertEquals(
                 1,
@@ -98,7 +98,7 @@ public class TestOMEXMLCreator {
 
     @Test
     void Check_Pixels_Element_Exists() throws IOException, ParserConfigurationException, SAXException, TransformerException {
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Assertions.assertEquals(
@@ -111,7 +111,7 @@ public class TestOMEXMLCreator {
     void Check_Width() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedWidth = String.valueOf(sampleMetadata.getWidth());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -122,7 +122,7 @@ public class TestOMEXMLCreator {
     void Check_Height() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedWidth = String.valueOf(sampleMetadata.getHeight());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -133,7 +133,7 @@ public class TestOMEXMLCreator {
     void Check_Number_Of_Z_Stacks() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedWidth = String.valueOf(sampleMetadata.getSizeZ());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -144,7 +144,7 @@ public class TestOMEXMLCreator {
     void Check_Number_Of_Channels() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedWidth = String.valueOf(sampleMetadata.getSizeC());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -155,7 +155,7 @@ public class TestOMEXMLCreator {
     void Check_Number_Of_Timepoints() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedWidth = String.valueOf(sampleMetadata.getSizeT());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -166,7 +166,7 @@ public class TestOMEXMLCreator {
     void Check_Pixel_Type() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedPixelType = "float";
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -177,7 +177,7 @@ public class TestOMEXMLCreator {
     void Check_Pixel_Width_Value() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedValue = String.valueOf(sampleMetadata.getPixelCalibration().getPixelWidthMicrons());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -188,7 +188,7 @@ public class TestOMEXMLCreator {
     void Check_Pixel_Width_Unit() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedUnit = String.valueOf(sampleMetadata.getPixelCalibration().getPixelHeightUnit());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -199,7 +199,7 @@ public class TestOMEXMLCreator {
     void Check_Pixel_Height_Value() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedValue = String.valueOf(sampleMetadata.getPixelCalibration().getPixelHeightMicrons());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -210,7 +210,7 @@ public class TestOMEXMLCreator {
     void Check_Pixel_Height_Unit() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedUnit = String.valueOf(sampleMetadata.getPixelCalibration().getPixelHeightUnit());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -221,7 +221,7 @@ public class TestOMEXMLCreator {
     void Check_Pixel_Z_Spacing_Value() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedValue = String.valueOf(sampleMetadata.getPixelCalibration().getZSpacingMicrons());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -232,7 +232,7 @@ public class TestOMEXMLCreator {
     void Check_Pixel_Z_Spacing_Unit() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         String expectedUnit = String.valueOf(sampleMetadata.getPixelCalibration().getZSpacingUnit());
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -245,7 +245,7 @@ public class TestOMEXMLCreator {
                 sampleMetadata.getPixelCalibration().getTimepoint(1) - sampleMetadata.getPixelCalibration().getTimepoint(0)
         );
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -257,7 +257,7 @@ public class TestOMEXMLCreator {
         // Required only for Java 17 and earlier, on platforms where UTF-8 is not the default
         String expectedUnit = new String("µs".getBytes(), StandardCharsets.UTF_8);
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -268,7 +268,7 @@ public class TestOMEXMLCreator {
     void Check_Channels_Element_Exist() throws IOException, ParserConfigurationException, SAXException, TransformerException {
         int expectedNumberOfChannels = sampleMetadata.getSizeC();
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -283,7 +283,7 @@ public class TestOMEXMLCreator {
         int channelIndex = 2;
         String expectedName = sampleMetadata.getChannel(channelIndex).getName();
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
@@ -296,7 +296,7 @@ public class TestOMEXMLCreator {
         int channelIndex = 3;
         int expectedColorRGB = sampleMetadata.getChannel(channelIndex).getColor();
 
-        byte[] xmlContent = OMEXMLCreator.create(sampleMetadata);
+        byte[] xmlContent = OmeXmlCreator.create(sampleMetadata);
 
         Element imageElement = (Element) getRootOfXMLText(new String(xmlContent, StandardCharsets.UTF_8)).getElementsByTagName("Image").item(0);
         Element pixelsElement = (Element) imageElement.getElementsByTagName("Pixels").item(0);
