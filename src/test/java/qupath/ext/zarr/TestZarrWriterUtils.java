@@ -1,4 +1,4 @@
-package qupath.lib.images.writers.ome.zarr;
+package qupath.ext.zarr;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.store.FilesystemStore;
@@ -9,6 +9,7 @@ import java.util.Arrays;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import qupath.ext.zarr.ZarrWriterUtils;
 import qupath.lib.color.ColorModelFactory;
 import qupath.lib.common.ColorTools;
 import qupath.lib.images.servers.ImageChannel;

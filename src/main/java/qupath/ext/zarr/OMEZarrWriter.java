@@ -8,6 +8,8 @@ import dev.zarr.zarrjava.v3.Group;
 import dev.zarr.zarrjava.v3.codec.Codec;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.common.ThreadTools;
@@ -93,7 +95,6 @@ public class OMEZarrWriter {
 
         OMEZarrAttributesCreator attributes = new OMEZarrAttributesCreator(metadata);
 
-//        ZarrGroup root = ZarrGroup.create(path, attributes.getGroupAttributes());
         var rootStore = new FilesystemStore(path).resolve();
 
         try {
@@ -103,8 +104,8 @@ public class OMEZarrWriter {
                     rootStore,
                     attrs
             );
-            ZarrWriterUtils.createOmeSubGroup(rootStore, path, server.getMetadata());
-        } catch (ZarrException e) {
+            ZarrWriterUtils.createOmeSubGroup(group, path, server.getMetadata());
+        } catch (ZarrException | ParserConfigurationException | TransformerException e) {
             logger.warn("Error while creating OME metadata file of {}. Some image metadata won't be written", path, e);
         }
 

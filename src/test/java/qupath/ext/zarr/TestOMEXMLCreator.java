@@ -1,4 +1,4 @@
-package qupath.lib.images.writers.ome.zarr;
+package qupath.ext.zarr;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

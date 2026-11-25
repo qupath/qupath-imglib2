@@ -27,7 +27,7 @@ dependencies {
 
     implementation("ome.zarr:ome-zarr-java:0.10.5")
     implementation("ome.zarr:ome-zarr-zarrjava:0.10.5")
-//    implementation("ome.zarr:ome-zarr-n5:0.7.3")
+    implementation("org.openmicroscopy:ome-xml:6.7.0")
 
     // QuPath
     api(qupath.qupath.core)

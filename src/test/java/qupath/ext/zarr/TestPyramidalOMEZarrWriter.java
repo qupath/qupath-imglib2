@@ -1,4 +1,4 @@
-package qupath.lib.images.writers.ome.zarr;
+package qupath.ext.zarr;
 
 import java.io.File;
 import org.apache.commons.io.FileUtils;

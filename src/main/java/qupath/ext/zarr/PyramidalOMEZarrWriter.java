@@ -18,8 +18,6 @@ package qupath.ext.zarr;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Attributes;
-import dev.zarr.zarrjava.store.FilesystemStore;
-import dev.zarr.zarrjava.store.StoreHandle;
 import dev.zarr.zarrjava.v3.codec.Codec;
 import dev.zarr.zarrjava.v3.Array;
 import dev.zarr.zarrjava.v3.Group;
@@ -75,11 +73,10 @@ public class PyramidalOMEZarrWriter {
     private final int numberOfThreads;
     private final Path path;
     private final Map<Integer, Array> levels;
-    // todo
     private final ProgressMonitor onProgress;
-    private final StoreHandle store;
+    private final Group root;
 
-    private PyramidalOMEZarrWriter(Builder builder, Path path) throws IOException {
+    private PyramidalOMEZarrWriter(Builder builder, Path path) throws IOException, ZarrException {
         TransformedServerBuilder transformedServerBuilder = new TransformedServerBuilder(builder.server);
         if (builder.zStart != 0 || builder.zEnd != builder.server.nZSlices() || builder.tStart != 0 || builder.tEnd != builder.server.nTimepoints()) {
             transformedServerBuilder.slice(
@@ -112,14 +109,12 @@ public class PyramidalOMEZarrWriter {
         this.numberOfThreads = builder.numberOfThreads;
         this.path = path;
 
-        this.store = new FilesystemStore(path).resolve();
-        // todo subgroup?
-//        this.root = ZarrGroup.create(path, null);
-//        try {
-//            ZarrWriterUtils.createOmeSubGroup(root, path, server.getMetadata());
-//        } catch (Exception e) {
-//            logger.warn("Error while creating OME XML file of {}. Some image metadata won't be written", path, e);
-//        }
+        this.root = Group.create(path, null);
+        try {
+            ZarrWriterUtils.createOmeSubGroup(root, path, server.getMetadata());
+        } catch (Exception e) {
+            logger.warn("Error while creating OME XML file of {}. Some image metadata won't be written", path, e);
+        }
 
         var metadata = server.getMetadata();
         if (firstDownsampleOnInputImage != 1) {
@@ -135,7 +130,7 @@ public class PyramidalOMEZarrWriter {
                             .height((int) (server.getHeight() / firstDownsampleOnInputImage))
                             .levelsFromDownsamples(downsamplesOutputImage.stream().mapToDouble(Double::doubleValue).toArray())
                             .build(),
-                    store,
+                    root.storeHandle,
                     tileWidth,
                     tileHeight,
                     new OMEZarrAttributesCreator(metadata).getLevelAttributes(),
@@ -169,10 +164,8 @@ public class PyramidalOMEZarrWriter {
             ).getGroupAttributes();
             Attributes attrs = new Attributes();
             attrs.putAll(attributes);
-            Group group = Group.create(
-                    store,
-                    attrs
-            );
+            root.setAttributes(attrs);
+
             writeLevel(
                     server.getPath(),
                     0,
@@ -201,15 +194,14 @@ public class PyramidalOMEZarrWriter {
                     );
                 }
 
-                // todo doesn't seem right to just repeat, subgroup...?
                 var at2 = new OMEZarrAttributesCreator(new ImageServerMetadata.Builder(server.getMetadata())
                         .levelsFromDownsamples(downsamplesOutputImage.stream().limit(i+1).mapToDouble(d -> d).toArray())
                         .pixelCalibration(server.getMetadata().getPixelCalibration().createScaledInstance(downsamplesOutputImage.get(i), downsamplesOutputImage.get(i)))
                         .build()
                 ).getGroupAttributes();
                 Attributes att2 = new Attributes();
-                attrs.putAll(at2);
-                Group.create(store, att2);
+                att2.putAll(at2);
+                root.setAttributes(att2);
             }
         } finally {
             executorService.shutdownNow();

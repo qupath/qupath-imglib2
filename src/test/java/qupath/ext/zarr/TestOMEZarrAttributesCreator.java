@@ -1,4 +1,4 @@
-package qupath.lib.images.writers.ome.zarr;
+package qupath.ext.zarr;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -44,7 +44,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonElement multiscalesElement = root.get(label);
+        JsonElement multiscalesElement = root.getAsJsonObject("ome").get(label);
         Assertions.assertTrue(multiscalesElement.isJsonArray());
     }
     
@@ -55,7 +55,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonElement axesElement = multiscale.get(0).getAsJsonObject().get(label);
         Assertions.assertTrue(axesElement.isJsonArray());
     }
@@ -69,7 +69,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String unit = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedUnit, unit);
@@ -84,7 +84,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String name = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedName, name);
@@ -99,7 +99,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String type = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedType, type);
@@ -114,7 +114,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String name = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedName, name);
@@ -129,7 +129,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String type = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedType, type);
@@ -144,7 +144,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String unit = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedUnit, unit);
@@ -159,7 +159,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String name = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedName, name);
@@ -174,7 +174,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String type = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedType, type);
@@ -189,7 +189,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String unit = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedUnit, unit);
@@ -204,7 +204,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String name = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedName, name);
@@ -219,7 +219,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String type = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedType, type);
@@ -234,7 +234,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String unit = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedUnit, unit);
@@ -249,7 +249,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String name = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedName, name);
@@ -264,7 +264,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray axes = multiscale.get(0).getAsJsonObject().get("axes").getAsJsonArray();
         String type = axes.get(axeIndex).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedType, type);
@@ -277,7 +277,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonElement datasetsElement = multiscale.get(0).getAsJsonObject().get(label);
         Assertions.assertTrue(datasetsElement.isJsonArray());
     }
@@ -289,7 +289,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         int numberOfDatasets = datasetsElement.size();
         Assertions.assertEquals(expectedNumberOfDatasets, numberOfDatasets);
@@ -303,7 +303,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         Assertions.assertTrue(levelDatasetsElement.has(label));
@@ -318,7 +318,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         String path = levelDatasetsElement.get(label).getAsString();
@@ -333,7 +333,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         Assertions.assertTrue(levelDatasetsElement.get(label).isJsonArray());
@@ -347,7 +347,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -363,7 +363,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -379,7 +379,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -396,7 +396,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -414,7 +414,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -432,7 +432,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -450,7 +450,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -468,7 +468,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -484,7 +484,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         Assertions.assertTrue(levelDatasetsElement.has(label));
@@ -499,7 +499,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         String path = levelDatasetsElement.get(label).getAsString();
@@ -514,7 +514,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         Assertions.assertTrue(levelDatasetsElement.get(label).isJsonArray());
@@ -528,7 +528,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -544,7 +544,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -560,7 +560,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -577,7 +577,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -595,7 +595,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -613,7 +613,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -631,7 +631,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -649,7 +649,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         JsonArray datasetsElement = multiscale.get(0).getAsJsonObject().get("datasets").getAsJsonArray();
         JsonObject levelDatasetsElement = datasetsElement.get(level).getAsJsonObject();
         JsonArray coordinateTransformationsElement = levelDatasetsElement.get("coordinateTransformations").getAsJsonArray();
@@ -664,7 +664,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         Assertions.assertTrue(multiscale.get(0).getAsJsonObject().has(label));
     }
 
@@ -676,7 +676,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         String name = multiscale.get(0).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedName, name);
     }
@@ -688,19 +688,19 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         Assertions.assertTrue(multiscale.get(0).getAsJsonObject().has(label));
     }
 
     @Test
     void Check_Multiscale_Array_Version() {
         String label = "version";
-        String expectedVersion = "0.4";
+        String expectedVersion = "0.5";
 
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonArray multiscale = root.getAsJsonArray("multiscales");
+        JsonArray multiscale = root.getAsJsonObject("ome").getAsJsonArray("multiscales");
         String version = multiscale.get(0).getAsJsonObject().get(label).getAsString();
         Assertions.assertEquals(expectedVersion, version);
     }
@@ -712,7 +712,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonElement omeroElement = root.get(label);
+        JsonElement omeroElement = root.getAsJsonObject("ome").get(label);
         Assertions.assertTrue(omeroElement.isJsonObject());
     }
 
@@ -723,7 +723,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonObject omeroElement = root.get("omero").getAsJsonObject();
+        JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
         Assertions.assertTrue(omeroElement.has(label));
     }
 
@@ -735,7 +735,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonObject omeroElement = root.get("omero").getAsJsonObject();
+        JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
         String name = omeroElement.get(label).getAsString();
         Assertions.assertEquals(expectedName, name);
     }
@@ -747,19 +747,19 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonObject omeroElement = root.get("omero").getAsJsonObject();
+        JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
         Assertions.assertTrue(omeroElement.has(label));
     }
 
     @Test
     void Check_Omero_Object_Version() {
         String label = "version";
-        String expectedVersion = "0.4";
+        String expectedVersion = "0.5";
 
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonObject omeroElement = root.get("omero").getAsJsonObject();
+        JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
         String name = omeroElement.get(label).getAsString();
         Assertions.assertEquals(expectedVersion, name);
     }
@@ -771,7 +771,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonObject omeroElement = root.get("omero").getAsJsonObject();
+        JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
         JsonElement channelsElement = omeroElement.get(label);
         Assertions.assertTrue(channelsElement.isJsonArray());
     }
@@ -784,7 +784,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonObject omeroElement = root.get("omero").getAsJsonObject();
+        JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
         JsonArray channelsElement = omeroElement.get("channels").getAsJsonArray();
         Assertions.assertTrue(channelsElement.get(channelIndex).getAsJsonObject().has(label));
     }
@@ -797,7 +797,7 @@ public class TestOMEZarrAttributesCreator {
         Map<String, Object> groupAttributes = new OMEZarrAttributesCreator(sampleMetadata).getGroupAttributes();
 
         JsonObject root = new Gson().toJsonTree(groupAttributes).getAsJsonObject();
-        JsonObject omeroElement = root.get("omero").getAsJsonObject();
+        JsonObject omeroElement = root.getAsJsonObject("ome").get("omero").getAsJsonObject();
         JsonArray channelsElement = omeroElement.get("channels").getAsJsonArray();
         String label = channelsElement.get(channelIndex).getAsJsonObject().get("label").getAsString();
         Assertions.assertEquals(expectedLabel, label);

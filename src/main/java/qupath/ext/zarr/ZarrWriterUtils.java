@@ -3,11 +3,14 @@ package qupath.ext.zarr;
 import com.scalableminds.bloscjava.Blosc;
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Attributes;
+import dev.zarr.zarrjava.core.codec.ArrayBytesCodec;
 import dev.zarr.zarrjava.store.StoreHandle;
 import dev.zarr.zarrjava.v3.Array;
 import dev.zarr.zarrjava.v3.DataType;
+import dev.zarr.zarrjava.v3.Group;
 import dev.zarr.zarrjava.v3.codec.Codec;
 import dev.zarr.zarrjava.v3.codec.core.BloscCodec;
+import dev.zarr.zarrjava.v3.codec.core.BytesCodec;
 import dev.zarr.zarrjava.v3.codec.core.JpegCodec;
 import java.awt.image.DataBuffer;
 import java.awt.image.WritableRaster;
@@ -94,10 +97,8 @@ class ZarrWriterUtils {
      * @throws InvalidPathException if the XML file path cannot be created
      * @throws IllegalArgumentException if the provided metadata contains an unexpected entry (e.g. no channels)
      */
-    public static void createOmeSubGroup(StoreHandle group, Path path, ImageServerMetadata metadata) throws ParserConfigurationException, IOException, TransformerException {
-        // todo migrate from old zarr
-        group.createSubGroup(OME_FOLDER_NAME);
-        var sub = group.resolve(OME_FOLDER_NAME);
+    public static void createOmeSubGroup(Group group, Path path, ImageServerMetadata metadata) throws ParserConfigurationException, IOException, TransformerException {
+        group.createGroup(OME_FOLDER_NAME);
 
         try (OutputStream outputStream = new FileOutputStream(Files.createFile(path.resolve(OME_FOLDER_NAME).resolve(OME_METADATA_FILE_NAME)).toString())) {
             outputStream.write(OMEXMLCreator.create(metadata));
@@ -421,8 +422,8 @@ class ZarrWriterUtils {
     static List<Codec> getDefaultCodecs() throws ZarrException {
         // todo unclear what proper defaults are here
         return List.of(
-                new JpegCodec(),
-                new BloscCodec(new BloscCodec.Configuration(Blosc.Compressor.LZ4, Blosc.Shuffle.NO_SHUFFLE, 5, 0, 0))
+                new BytesCodec(dev.zarr.zarrjava.core.codec.core.BytesCodec.Endian.nativeOrder()),
+                new BloscCodec(new BloscCodec.Configuration(Blosc.Compressor.ZSTD, Blosc.Shuffle.NO_SHUFFLE, 5, 2, 0))
         );
     }
 }

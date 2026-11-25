@@ -63,7 +63,7 @@ class OMEZarrAttributesCreator {
         if (metadata.getChannelType() == ImageServerMetadata.ChannelType.CLASSIFICATION) {
             out.putAll(getLabelInfo());
         }
-        return out;
+        return Map.of("ome", out);
     }
 
     private Map<String, Object> getLabelInfo() {
