@@ -2,6 +2,8 @@ package qupath.ext.zarr;
 
 import java.util.Arrays;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.img.cell.AbstractCellImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
@@ -30,9 +32,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * A server builder for OME Zarr images.
+ */
 public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedImage> {
 
     private static final Logger logger = LoggerFactory.getLogger(OmeZarrImageServerBuilder.class);
+    private static final int DEFAULT_TILE_SIZE = 1024;
 
     /**
      * Default constructor.
@@ -63,6 +69,15 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
         List<RandomAccessibleInterval<T>> resolutions = new ArrayList<>();
         List<AxisCalibration> axes = contents.axes(0);
         PixelCalibration cal = parsePixelCalibration(axes);
+
+        int tileWidth = DEFAULT_TILE_SIZE;
+        int tileHeight = DEFAULT_TILE_SIZE;
+        if (contents.asLargestImg() instanceof AbstractCellImg aci) {
+            var grid = aci.getCellGrid();
+            tileWidth = grid.cellDimension(ImgBuilder.AXIS_X);
+            tileHeight = grid.cellDimension(ImgBuilder.AXIS_Y);
+        }
+
         for (int r = 0; r < contents.numResolutionLevels(); r++) {
             RandomAccessibleInterval<T> img = standardizeAxes(contents.asImg(r), contents);
             resolutions.add(img);
@@ -80,6 +95,7 @@ public class OmeZarrImageServerBuilder implements ImageServerBuilder<BufferedIma
         }
         return builder
                 .pixelCalibration(cal)
+                .preferredTileSize(tileWidth, tileHeight)
                 .uris(uri)
                 .build();
     }

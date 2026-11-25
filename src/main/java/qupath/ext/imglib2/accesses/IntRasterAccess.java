@@ -18,6 +18,9 @@ import java.awt.image.Raster;
  */
 public class IntRasterAccess extends IntArray implements SizableDataAccess, VolatileAccess {
 
+    /**
+     * The size of the raster
+     */
     private final int size;
 
     /**

@@ -187,8 +187,18 @@ class OMEZarrAttributesCreator {
         });
 
         switch (dimension) {
-            case X, Y, Z -> {
+            case X -> {
                 if (metadata.getPixelCalibration().getPixelWidthUnit().equals(PixelCalibration.MICROMETER)) {
+                    axis.put("unit", "micrometer");
+                }
+            }
+            case Y -> {
+                if (metadata.getPixelCalibration().getPixelHeightUnit().equals(PixelCalibration.MICROMETER)) {
+                    axis.put("unit", "micrometer");
+                }
+            }
+            case Z -> {
+                if (metadata.getPixelCalibration().getZSpacingUnit().equals(PixelCalibration.MICROMETER)) {
                     axis.put("unit", "micrometer");
                 }
             }

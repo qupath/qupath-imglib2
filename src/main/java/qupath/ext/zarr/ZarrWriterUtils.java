@@ -149,8 +149,7 @@ class ZarrWriterUtils {
                             })
                             .build()
             );
-            Attributes attributes = new Attributes();
-            attributes.putAll(levelAttributes);
+            Attributes attributes = new Attributes(levelAttributes);
             array = array.setAttributes(attributes);
             levels.put(level, array);
         }
@@ -303,7 +302,6 @@ class ZarrWriterUtils {
             return pixels;
         }
 
-        // todo
         Object pixels = getPixels(image);
 
         // No need to copy for single array

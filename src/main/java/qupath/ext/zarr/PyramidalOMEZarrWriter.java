@@ -18,6 +18,7 @@ package qupath.ext.zarr;
 
 import dev.zarr.zarrjava.ZarrException;
 import dev.zarr.zarrjava.core.Attributes;
+import dev.zarr.zarrjava.v3.GroupMetadata;
 import dev.zarr.zarrjava.v3.codec.Codec;
 import dev.zarr.zarrjava.v3.Array;
 import dev.zarr.zarrjava.v3.Group;
@@ -109,7 +110,7 @@ public class PyramidalOMEZarrWriter {
         this.numberOfThreads = builder.numberOfThreads;
         this.path = path;
 
-        this.root = Group.create(path, null);
+        this.root = Group.create(path, new GroupMetadata(null));
         try {
             ZarrWriterUtils.createOmeSubGroup(root, path, server.getMetadata());
         } catch (Exception e) {
@@ -162,8 +163,7 @@ public class PyramidalOMEZarrWriter {
                     .pixelCalibration(server.getMetadata().getPixelCalibration().createScaledInstance(firstDownsampleOnInputImage, firstDownsampleOnInputImage))
                     .build()
             ).getGroupAttributes();
-            Attributes attrs = new Attributes();
-            attrs.putAll(attributes);
+            Attributes attrs = new Attributes(attributes);
             root.setAttributes(attrs);
 
             writeLevel(
@@ -194,14 +194,13 @@ public class PyramidalOMEZarrWriter {
                     );
                 }
 
-                var at2 = new OMEZarrAttributesCreator(new ImageServerMetadata.Builder(server.getMetadata())
+                var levelAttrs = new OMEZarrAttributesCreator(new ImageServerMetadata.Builder(server.getMetadata())
                         .levelsFromDownsamples(downsamplesOutputImage.stream().limit(i+1).mapToDouble(d -> d).toArray())
                         .pixelCalibration(server.getMetadata().getPixelCalibration().createScaledInstance(downsamplesOutputImage.get(i), downsamplesOutputImage.get(i)))
                         .build()
                 ).getGroupAttributes();
-                Attributes att2 = new Attributes();
-                att2.putAll(at2);
-                root.setAttributes(att2);
+                Attributes levelAttributes = new Attributes(levelAttrs);
+                root.setAttributes(levelAttributes);
             }
         } finally {
             executorService.shutdownNow();

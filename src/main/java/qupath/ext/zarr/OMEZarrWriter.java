@@ -87,19 +87,13 @@ public class OMEZarrWriter {
 
         this.numberOfThreads = builder.numberOfThreads;
         var metadata = server.getMetadata();
-        if (downsamples[0] != 1) {
-            metadata = new ImageServerMetadata.Builder(server.getMetadata())
-                .pixelCalibration(metadata.getPixelCalibration().createScaledInstance(downsamples[0], downsamples[0]))
-                .build();
-        }
 
         OMEZarrAttributesCreator attributes = new OMEZarrAttributesCreator(metadata);
 
         var rootStore = new FilesystemStore(path).resolve();
 
         try {
-            Attributes attrs = new Attributes();
-            attrs.putAll(attributes.getGroupAttributes());
+            Attributes attrs = new Attributes(attributes.getGroupAttributes());
             Group group = Group.create(
                     rootStore,
                     attrs

@@ -24,6 +24,9 @@ import java.awt.image.SinglePixelPackedSampleModel;
  */
 public class ArgbBufferedImageAccess extends IntArray implements SizableDataAccess, VolatileAccess {
 
+    /**
+     * The size of the buffer.
+     */
     private final int size;
 
     /**
