@@ -23,6 +23,9 @@ import java.awt.image.SinglePixelPackedSampleModel;
  */
 public class ByteBufferedImageAccess extends ByteArray implements SizableDataAccess, VolatileAccess {
 
+    /**
+     * The size of buffer
+     */
     private final int size;
 
     /**

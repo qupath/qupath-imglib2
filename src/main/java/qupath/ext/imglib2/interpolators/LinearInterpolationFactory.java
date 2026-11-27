@@ -19,6 +19,11 @@ import net.imglib2.type.numeric.RealType;
  */
 public class LinearInterpolationFactory<T extends NumericType<T>> implements InterpolatorFactory<T, RandomAccessible<T>> {
 
+    /**
+     * Default no-args constructor.
+     */
+    public LinearInterpolationFactory() {}
+
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public RealRandomAccess<T> create(RandomAccessible randomAccessible) {
