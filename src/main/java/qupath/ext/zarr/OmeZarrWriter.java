@@ -174,7 +174,6 @@ public class OmeZarrWriter {
      */
     public void writeTile(TileRequest tileRequest) throws Exception {
         try {
-            // todo
             ucar.ma2.Array aa = ucar.ma2.Array.factory(
                     ZarrWriterUtils.getUcarDatatype(server.getPixelType()),
                     ZarrWriterUtils.getDimensionsOfTile(server.getMetadata(), tileRequest),
@@ -405,10 +404,10 @@ public class OmeZarrWriter {
          * @throws IOException if the empty image cannot be created. This can happen if the provided path is incorrect
          * or if the user doesn't have enough permissions
          * @throws IllegalArgumentException if the provided path doesn't end with ".ome.zarr" or a file/directory already
-         * @throws ZarrException if no codec has been specified and the default codec fails to build
+         * @throws IllegalStateException if no codec has been specified and the default codec fails to build
          * exists at this location
          */
-        public OmeZarrWriter build(String path) throws IOException, ZarrException {
+        public OmeZarrWriter build(String path) throws IOException, IllegalStateException {
             Path outputPath = Paths.get(path);
             if (codecs.isEmpty()) {
                 codecs.addAll(ZarrWriterUtils.getDefaultCodecs());

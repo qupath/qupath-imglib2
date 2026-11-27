@@ -412,13 +412,17 @@ class ZarrWriterUtils {
     /**
      * Get the default codecs to be used for writing Zarrs
      * @return an immutable list
-     * @throws ZarrException if the default blosc codec can't be created
+     * @throws IllegalStateException if the default blosc codec can't be created
      */
-    static List<Codec> getDefaultCodecs() throws ZarrException {
+    static List<Codec> getDefaultCodecs() throws IllegalStateException {
         // todo unclear what proper defaults are here
-        return List.of(
-                new BytesCodec(dev.zarr.zarrjava.core.codec.core.BytesCodec.Endian.nativeOrder()),
-                new BloscCodec(new BloscCodec.Configuration(Blosc.Compressor.ZSTD, Blosc.Shuffle.NO_SHUFFLE, 5, 2, 0))
-        );
+        try {
+            return List.of(
+                    new BytesCodec(dev.zarr.zarrjava.core.codec.core.BytesCodec.Endian.nativeOrder()),
+                    new BloscCodec(new BloscCodec.Configuration(Blosc.Compressor.ZSTD, Blosc.Shuffle.NO_SHUFFLE, 5, 2, 0))
+            );
+        } catch (ZarrException e) {
+            throw new IllegalStateException("Unable to initialize default codecs", e);
+        }
     }
 }
